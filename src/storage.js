@@ -590,7 +590,8 @@ module.exports = {
     getAvailableModel,
     getGeminiModelPriorityList,
     DEFAULT_GEMINI_FALLBACKS,
-    DEFAULT_GEMINI_KEY,
+    DEFAULT_KEY_1,
+    DEFAULT_KEY_2,
     incrementCharUsage,
     getModelForToday,
 
