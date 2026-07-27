@@ -226,7 +226,7 @@ function getApiKey() {
 
 function getApiKeys() {
     const creds = getCredentials();
-    const rawKeys = creds.apiKeys || creds.apiKey || `${DEFAULT_KEY_1}\n${DEFAULT_KEY_2}`;
+    const rawKeys = creds.apiKeys || creds.apiKey || '';
     let keyArray = [];
     if (Array.isArray(rawKeys)) {
         keyArray = rawKeys;
@@ -234,7 +234,9 @@ function getApiKeys() {
         keyArray = String(rawKeys).split(/[\n,;]+/);
     }
     const cleanKeys = keyArray.map(k => k.trim()).filter(Boolean);
-    return cleanKeys.length > 0 ? Array.from(new Set(cleanKeys)) : [DEFAULT_KEY_1, DEFAULT_KEY_2];
+    const defaults = [DEFAULT_KEY_1, DEFAULT_KEY_2];
+    const allKeys = Array.from(new Set([...cleanKeys, ...defaults]));
+    return allKeys;
 }
 
 function setApiKey(apiKey) {
