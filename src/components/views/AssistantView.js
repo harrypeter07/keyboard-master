@@ -360,9 +360,15 @@ export class AssistantView extends LitElement {
 
     getCurrentResponse() {
         const profileNames = this.getProfileNames();
-        return this.responses.length > 0 && this.currentResponseIndex >= 0
-            ? this.responses[this.currentResponseIndex]
-            : `Listening to your ${profileNames[this.selectedProfile] || 'session'}...`;
+        if (this.responses.length === 0) {
+            return `Listening to your ${profileNames[this.selectedProfile] || 'session'}...`;
+        }
+        if (this.responses.length === 1) {
+            return this.responses[0];
+        }
+        return this.responses
+            .map((resp, idx) => `### Turn ${idx + 1}\n\n${resp}`)
+            .join('\n\n---\n\n');
     }
 
     renderMarkdown(content) {
@@ -700,6 +706,7 @@ export class AssistantView extends LitElement {
                 `;
             }
             container.innerHTML = renderedResponse;
+            this.scrollToBottom();
             if (this.shouldAnimateResponse) {
                 this.dispatchEvent(new CustomEvent('response-animation-complete', { bubbles: true, composed: true }));
             }

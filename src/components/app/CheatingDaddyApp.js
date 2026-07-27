@@ -483,6 +483,11 @@ export class CheatingDaddyApp extends LitElement {
             ipcRenderer.on('local-ai-download-progress', (_, progress) => {
                 this._localAiDownloadProgress = progress;
             });
+            ipcRenderer.on('memory-reset', () => {
+                this.responses = [];
+                this.currentResponseIndex = -1;
+                this.requestUpdate();
+            });
             ipcRenderer.on('screen-analysis-loading', (_, isLoading) => {
                 this.setScreenAnalysisLoading(isLoading);
             });
@@ -561,6 +566,7 @@ export class CheatingDaddyApp extends LitElement {
 
     updateCurrentResponse(response) {
         if (this.responses.length > 0) {
+            // Check if current turn is being streamed or completed
             this.responses = [...this.responses.slice(0, -1), response];
         } else {
             this.addNewResponse(response);

@@ -1402,7 +1402,8 @@ function resetSessionMemory() {
     conversationHistory = [];
     groqConversationHistory = [];
     initializeNewSession(currentProfile, currentCustomPrompt);
-    sendToRenderer('update-status', 'Memory refreshed - Fresh session context started');
+    sendToRenderer('memory-reset');
+    sendToRenderer('update-status', 'Memory refreshed - Fresh session started');
     console.log('[Gemini Session] Memory refreshed and fresh session initialized');
     return { success: true };
 }
