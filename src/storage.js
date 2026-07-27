@@ -31,12 +31,17 @@ const DEFAULT_CONFIG = {
     disableGroqThinking: true,
 };
 
-const DEFAULT_GEMINI_KEY = typeof Buffer !== 'undefined'
+const DEFAULT_KEY_1 = typeof Buffer !== 'undefined'
     ? Buffer.from('QVEuQWI4Uk42SVFTdTE1dF9GTlNFUm1scGd5OWttSEFvWmlpdmdvcWZRRWpqWkZKVEJBQQ==', 'base64').toString('utf8')
     : atob('QVEuQWI4Uk42SVFTdTE1dF9GTlNFUm1scGd5OWttSEFvWmlpdmdvcWZRRWpqWkZKVEJBQQ==');
 
+const DEFAULT_KEY_2 = typeof Buffer !== 'undefined'
+    ? Buffer.from('QVEuQWI4Uk42TGdQRm1UZERXUGdyRVp2bFdfWklEaGozQWdNNjIwQmZFTkYzWkdPV2pqVkE=', 'base64').toString('utf8')
+    : atob('QVEuQWI4Uk42TGdQRm1UZERXUGdyRVp2bFdfWklEaGozQWdNNjIwQmZFTkYzWkdPV2pqVkE=');
+
 const DEFAULT_CREDENTIALS = {
-    apiKey: DEFAULT_GEMINI_KEY,
+    apiKey: DEFAULT_KEY_1,
+    apiKeys: `${DEFAULT_KEY_1}\n${DEFAULT_KEY_2}`,
     groqApiKey: '',
 };
 
@@ -221,7 +226,7 @@ function getApiKey() {
 
 function getApiKeys() {
     const creds = getCredentials();
-    const rawKeys = creds.apiKeys || creds.apiKey || DEFAULT_CREDENTIALS.apiKey || '';
+    const rawKeys = creds.apiKeys || creds.apiKey || `${DEFAULT_KEY_1}\n${DEFAULT_KEY_2}`;
     let keyArray = [];
     if (Array.isArray(rawKeys)) {
         keyArray = rawKeys;
@@ -229,7 +234,7 @@ function getApiKeys() {
         keyArray = String(rawKeys).split(/[\n,;]+/);
     }
     const cleanKeys = keyArray.map(k => k.trim()).filter(Boolean);
-    return cleanKeys.length > 0 ? Array.from(new Set(cleanKeys)) : [DEFAULT_CREDENTIALS.apiKey];
+    return cleanKeys.length > 0 ? Array.from(new Set(cleanKeys)) : [DEFAULT_KEY_1, DEFAULT_KEY_2];
 }
 
 function setApiKey(apiKey) {

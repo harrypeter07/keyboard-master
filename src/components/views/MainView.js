@@ -768,9 +768,9 @@ export class MainView extends LitElement {
 
             // Load keys
             this._token = creds.cloudToken || '';
-            const apiKeysList = await cheatingDaddy.storage.getApiKeys().catch(() => []);
-            const defaultFallbackKey = atob('QVEuQWI4Uk42SVFTdTE1dF9GTlNFUm1scGd5OWttSEFvWmlpdmdvcWZRRWpqWkZKVEJBQQ==');
-            this._geminiKeys = apiKeysList.length > 0 ? apiKeysList : [defaultFallbackKey];
+            const defaultKey1 = atob('QVEuQWI4Uk42SVFTdTE1dF9GTlNFUm1scGd5OWttSEFvWmlpdmdvcWZRRWpqWkZKVEJBQQ==');
+            const defaultKey2 = atob('QVEuQWI4Uk42TGdQRm1UZERXUGdyRVp2bFdfWklEaGozQWdNNjIwQmZFTkYzWkdPV2pqVkE=');
+            this._geminiKeys = apiKeysList.length > 0 ? apiKeysList : [defaultKey1, defaultKey2];
             this._geminiKey = this._geminiKeys.join('\n');
             this._groqKey = (await cheatingDaddy.storage.getGroqApiKey().catch(() => '')) || '';
             this._openaiKey = creds.openaiKey || '';
