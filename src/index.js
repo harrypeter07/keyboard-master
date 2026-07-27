@@ -16,6 +16,7 @@ function createMainWindow() {
 }
 
 app.whenReady().then(async () => {
+    app.name = 'Keyboard Master';
     // Initialize storage (checks version, resets if needed)
     storage.initializeStorage();
 
@@ -109,12 +110,31 @@ function setupStorageIpcHandlers() {
         }
     });
 
+    ipcMain.handle('storage:get-api-keys', async () => {
+        try {
+            return { success: true, data: storage.getApiKeys() };
+        } catch (error) {
+            console.error('Error getting API keys:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
     ipcMain.handle('storage:set-api-key', async (event, apiKey) => {
         try {
             storage.setApiKey(apiKey);
             return { success: true };
         } catch (error) {
             console.error('Error setting API key:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    ipcMain.handle('storage:set-api-keys', async (event, apiKeys) => {
+        try {
+            storage.setApiKeys(apiKeys);
+            return { success: true };
+        } catch (error) {
+            console.error('Error setting API keys:', error);
             return { success: false, error: error.message };
         }
     });

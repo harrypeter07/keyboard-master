@@ -3,7 +3,7 @@ const { BrowserWindow, ipcMain } = require('electron');
 const { spawn } = require('child_process');
 const { saveDebugAudio } = require('../audioUtils');
 const { getSystemPrompt } = require('./prompts');
-const { getAvailableModel, incrementLimitCount, getApiKey, getGroqApiKey, incrementCharUsage, getConfig } = require('../storage');
+const { getAvailableModel, incrementLimitCount, getApiKey, getApiKeys, getGroqApiKey, incrementCharUsage, getConfig, getGeminiModelPriorityList, getPreferences } = require('../storage');
 const { connectCloud, sendCloudAudio, sendCloudText, sendCloudImage, closeCloud, isCloudActive, setOnTurnComplete } = require('./cloud');
 const { startTransportLog, logTransportEvent, closeTransportLog } = require('./transportLogger');
 
@@ -581,8 +581,9 @@ async function sendToGemma(transcription) {
             ...messages,
         ];
 
+        const gemmaModelName = getConfig().gemmaModel || 'gemma-4-26b-a4b-it';
         const response = await ai.models.generateContentStream({
-            model: 'gemma-4-26b-a4b-it',
+            model: gemmaModelName,
             contents: messagesWithSystem,
         });
 
@@ -603,7 +604,7 @@ async function sendToGemma(transcription) {
         const inputChars = systemPromptChars + historyChars;
         const outputChars = fullText.length;
 
-        incrementCharUsage('gemini', 'gemma-4-26b-a4b-it', inputChars + outputChars);
+        incrementCharUsage('gemini', gemmaModelName, inputChars + outputChars);
 
         if (fullText.trim()) {
             groqConversationHistory.push({
@@ -656,9 +657,16 @@ async function initializeGeminiSession(apiKey, customPrompt = '', profile = 'int
     const systemPrompt = getSystemPrompt(profile, customPrompt, googleSearchEnabled);
     currentSystemPrompt = systemPrompt; // Store for Groq
 
-    // Initialize new conversation session only on first connect
-    if (!isReconnect) {
-        initializeNewSession(profile, customPrompt);
+    // Check if audio listening is enabled in settings
+    const prefs = getPreferences();
+    if (prefs.audioListeningEnabled === false) {
+        console.log('Audio listening is disabled in preferences. Running in screen-only mode.');
+        isInitializingSession = false;
+        if (!isReconnect) {
+            sendToRenderer('session-initializing', false);
+        }
+        sendToRenderer('update-status', 'Screen Capture Mode Ready (Audio Disabled)');
+        return true;
     }
 
     try {
@@ -994,59 +1002,95 @@ async function sendAudioToGemini(base64Data, geminiSessionRef) {
 }
 
 async function sendImageToGeminiHttp(base64Data, prompt) {
-    // Get available model based on rate limits
-    const model = getAvailableModel();
-
-    const apiKey = getApiKey();
-    if (!apiKey) {
-        return { success: false, error: 'No API key configured' };
+    const apiKeys = getApiKeys();
+    if (!apiKeys || apiKeys.length === 0) {
+        sendToRenderer('screen-analysis-loading', false);
+        return { success: false, error: 'No Gemini API key configured' };
     }
 
-    try {
+    // Send loader indicator to renderer chat window
+    sendToRenderer('screen-analysis-loading', true);
+    sendToRenderer('update-status', 'Analyzing screen with Gemini AI...');
+
+    const priorityList = getGeminiModelPriorityList();
+
+    // Attach previous turns from screenAnalysisHistory for session context memory
+    let finalPrompt = prompt;
+    if (screenAnalysisHistory && screenAnalysisHistory.length > 0) {
+        const recentHistory = screenAnalysisHistory.slice(-5);
+        const historyText = recentHistory
+            .map((item, idx) => `Turn ${idx + 1}:\nUser Question / Screen Analysis: ${item.prompt}\nAI Answer: ${item.response}`)
+            .join('\n\n');
+        finalPrompt = `[ACTIVE SESSION MEMORY - PREVIOUS CONTEXT]\n${historyText}\n\n[CURRENT USER SCREEN REQUEST]\n${prompt}\n\nPlease maintain complete context and continuity with the previous turns above.`;
+    }
+
+    const contents = [
+        {
+            inlineData: {
+                mimeType: 'image/jpeg',
+                data: base64Data,
+            },
+        },
+        { text: finalPrompt },
+    ];
+
+    let lastError = null;
+
+    // Outer Loop: Iterate through all available Gemini API Keys
+    for (let keyIdx = 0; keyIdx < apiKeys.length; keyIdx++) {
+        const apiKey = apiKeys[keyIdx];
         const ai = new GoogleGenAI({ apiKey: apiKey });
 
-        const contents = [
-            {
-                inlineData: {
-                    mimeType: 'image/jpeg',
-                    data: base64Data,
-                },
-            },
-            { text: prompt },
-        ];
+        // Inner Loop: Iterate through Gemini Models for current API Key
+        for (let modelIdx = 0; modelIdx < priorityList.length; modelIdx++) {
+            const modelCandidate = priorityList[modelIdx];
+            console.log(`[Gemini Resilient Engine] Key ${keyIdx + 1}/${apiKeys.length} | Model candidate ${modelIdx + 1}/${priorityList.length}: ${modelCandidate}`);
 
-        console.log(`Sending image to ${model} (streaming)...`);
-        const response = await ai.models.generateContentStream({
-            model: model,
-            contents: contents,
-        });
+            try {
+                const response = await ai.models.generateContentStream({
+                    model: modelCandidate,
+                    contents: contents,
+                });
 
-        // Increment count after successful call
-        incrementLimitCount(model);
+                incrementLimitCount(modelCandidate);
 
-        // Stream the response
-        let fullText = '';
-        let isFirst = true;
-        for await (const chunk of response) {
-            const chunkText = chunk.text;
-            if (chunkText) {
-                fullText += chunkText;
-                // Send to renderer - new response for first chunk, update for subsequent
-                sendToRenderer(isFirst ? 'new-response' : 'update-response', fullText);
-                isFirst = false;
+                let fullText = '';
+                let isFirst = true;
+                for await (const chunk of response) {
+                    const chunkText = chunk.text;
+                    if (chunkText) {
+                        fullText += chunkText;
+                        if (isFirst) {
+                            // Turn off loading spinner as soon as first token arrives
+                            sendToRenderer('screen-analysis-loading', false);
+                        }
+                        sendToRenderer(isFirst ? 'new-response' : 'update-response', fullText);
+                        isFirst = false;
+                    }
+                }
+
+                // Turn off loader card
+                sendToRenderer('screen-analysis-loading', false);
+                sendToRenderer('update-status', `Analysis ready (${modelCandidate})`);
+                console.log(`[Gemini Resilient Engine] Response completed using Key ${keyIdx + 1} and model ${modelCandidate}`);
+
+                saveScreenAnalysis(prompt, fullText, modelCandidate);
+                return { success: true, text: fullText, model: modelCandidate };
+            } catch (error) {
+                console.warn(`[Gemini Resilient Engine] Key ${keyIdx + 1} with model ${modelCandidate} failed (${error.message}). Failing over...`);
+                lastError = error;
+                sendToRenderer(
+                    'update-status',
+                    `Key ${keyIdx + 1} (${modelCandidate}) limit reached. Retrying next model/key...`
+                );
             }
         }
-
-        console.log(`Image response completed from ${model}`);
-
-        // Save screen analysis to history
-        saveScreenAnalysis(prompt, fullText, model);
-
-        return { success: true, text: fullText, model: model };
-    } catch (error) {
-        console.error('Error sending image to Gemini HTTP:', error);
-        return { success: false, error: error.message };
     }
+
+    sendToRenderer('screen-analysis-loading', false);
+    sendToRenderer('update-status', 'All Gemini API keys & models exhausted');
+    console.error('All Gemini API keys and model fallbacks exhausted without success:', lastError);
+    return { success: false, error: lastError ? lastError.message : 'All Gemini API keys and model fallbacks failed' };
 }
 
 function setupGeminiIpcHandlers(geminiSessionRef) {
@@ -1333,11 +1377,18 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
         }
     });
 
+    ipcMain.handle('reset-session-memory', async event => {
+        try {
+            return resetSessionMemory();
+        } catch (error) {
+            console.error('Error resetting session memory:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
     ipcMain.handle('update-google-search-setting', async (event, enabled) => {
         try {
             console.log('Google Search setting updated to:', enabled);
-            // The setting is already saved in localStorage by the renderer
-            // This is just for logging/confirmation
             return { success: true };
         } catch (error) {
             console.error('Error updating Google Search setting:', error);
@@ -1346,12 +1397,23 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
     });
 }
 
+function resetSessionMemory() {
+    screenAnalysisHistory = [];
+    conversationHistory = [];
+    groqConversationHistory = [];
+    initializeNewSession(currentProfile, currentCustomPrompt);
+    sendToRenderer('update-status', 'Memory refreshed - Fresh session context started');
+    console.log('[Gemini Session] Memory refreshed and fresh session initialized');
+    return { success: true };
+}
+
 module.exports = {
     initializeGeminiSession,
     getEnabledTools,
     getStoredSetting,
     sendToRenderer,
     initializeNewSession,
+    resetSessionMemory,
     saveConversationTurn,
     getCurrentSessionData,
     killExistingSystemAudioDump,

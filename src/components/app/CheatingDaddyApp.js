@@ -388,6 +388,7 @@ export class CheatingDaddyApp extends LitElement {
         _updateAvailable: { state: true },
         _whisperDownloading: { state: true },
         _localAiDownloadProgress: { state: true },
+        isScreenAnalysisLoading: { type: Boolean, state: true },
     };
 
     constructor() {
@@ -415,6 +416,7 @@ export class CheatingDaddyApp extends LitElement {
         this._whisperDownloading = false;
         this._localAiDownloadProgress = { active: false, label: '', percentage: null };
         this._localVersion = '';
+        this.isScreenAnalysisLoading = false;
 
         this._loadFromStorage();
         this._checkForUpdates();
@@ -481,6 +483,9 @@ export class CheatingDaddyApp extends LitElement {
             ipcRenderer.on('local-ai-download-progress', (_, progress) => {
                 this._localAiDownloadProgress = progress;
             });
+            ipcRenderer.on('screen-analysis-loading', (_, isLoading) => {
+                this.setScreenAnalysisLoading(isLoading);
+            });
         }
     }
 
@@ -496,7 +501,16 @@ export class CheatingDaddyApp extends LitElement {
             ipcRenderer.removeAllListeners('reconnect-failed');
             ipcRenderer.removeAllListeners('whisper-downloading');
             ipcRenderer.removeAllListeners('local-ai-download-progress');
+            ipcRenderer.removeAllListeners('screen-analysis-loading');
         }
+    }
+
+    setScreenAnalysisLoading(isLoading) {
+        this.isScreenAnalysisLoading = isLoading;
+        if (isLoading) {
+            this.currentView = 'assistant';
+        }
+        this.requestUpdate();
     }
 
     // ── Timer ──
@@ -799,6 +813,7 @@ export class CheatingDaddyApp extends LitElement {
                         .selectedProfile=${this.selectedProfile}
                         .onSendText=${msg => this.handleSendText(msg)}
                         .shouldAnimateResponse=${this.shouldAnimateResponse}
+                        .isAnalyzingScreen=${this.isScreenAnalysisLoading}
                         @response-index-changed=${this.handleResponseIndexChanged}
                         @response-animation-complete=${() => {
                             this.shouldAnimateResponse = false;

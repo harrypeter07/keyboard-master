@@ -298,6 +298,32 @@ export class AssistantView extends LitElement {
             height: calc(100% + 2px);
             pointer-events: none;
         }
+        .analysis-loader-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            margin: 12px 0;
+            border-radius: var(--radius-md, 8px);
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.14) 0%, rgba(139, 92, 246, 0.14) 100%);
+            border: 1px solid rgba(59, 130, 246, 0.35);
+            color: var(--text-primary);
+            font-size: var(--font-size-sm, 14px);
+            font-weight: 500;
+        }
+
+        .analysis-spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.25);
+            border-top-color: var(--accent, #3b82f6);
+            border-radius: 50%;
+            animation: loader-spin 0.8s linear infinite;
+        }
+
+        @keyframes loader-spin {
+            to { transform: rotate(360deg); }
+        }
     `;
 
     static properties = {
@@ -307,6 +333,7 @@ export class AssistantView extends LitElement {
         onSendText: { type: Function },
         shouldAnimateResponse: { type: Boolean },
         isAnalyzing: { type: Boolean, state: true },
+        isAnalyzingScreen: { type: Boolean, state: true },
     };
 
     constructor() {
@@ -316,6 +343,7 @@ export class AssistantView extends LitElement {
         this.selectedProfile = 'interview';
         this.onSendText = () => {};
         this.isAnalyzing = false;
+        this.isAnalyzingScreen = false;
         this._animFrame = null;
     }
 
@@ -434,11 +462,16 @@ export class AssistantView extends LitElement {
             this.handleNextResponse = () => this.navigateToNextResponse();
             this.handleScrollUp = () => this.scrollResponseUp();
             this.handleScrollDown = () => this.scrollResponseDown();
+            this.handleScreenAnalysisLoading = (_, isLoading) => {
+                this.isAnalyzingScreen = isLoading;
+                this.requestUpdate();
+            };
 
             ipcRenderer.on('navigate-previous-response', this.handlePreviousResponse);
             ipcRenderer.on('navigate-next-response', this.handleNextResponse);
             ipcRenderer.on('scroll-response-up', this.handleScrollUp);
             ipcRenderer.on('scroll-response-down', this.handleScrollDown);
+            ipcRenderer.on('screen-analysis-loading', this.handleScreenAnalysisLoading);
         }
     }
 
@@ -452,6 +485,7 @@ export class AssistantView extends LitElement {
             if (this.handleNextResponse) ipcRenderer.removeListener('navigate-next-response', this.handleNextResponse);
             if (this.handleScrollUp) ipcRenderer.removeListener('scroll-response-up', this.handleScrollUp);
             if (this.handleScrollDown) ipcRenderer.removeListener('scroll-response-down', this.handleScrollDown);
+            if (this.handleScreenAnalysisLoading) ipcRenderer.removeListener('screen-analysis-loading', this.handleScreenAnalysisLoading);
         }
     }
 
@@ -656,7 +690,15 @@ export class AssistantView extends LitElement {
         const container = this.shadowRoot.querySelector('#responseContainer');
         if (container) {
             const currentResponse = this.getCurrentResponse();
-            const renderedResponse = this.renderMarkdown(currentResponse);
+            let renderedResponse = this.renderMarkdown(currentResponse);
+            if (this.isAnalyzingScreen) {
+                renderedResponse += `
+                    <div class="analysis-loader-card">
+                        <div class="analysis-spinner"></div>
+                        <span>Analyzing screen with Gemini AI...</span>
+                    </div>
+                `;
+            }
             container.innerHTML = renderedResponse;
             if (this.shouldAnimateResponse) {
                 this.dispatchEvent(new CustomEvent('response-animation-complete', { bubbles: true, composed: true }));

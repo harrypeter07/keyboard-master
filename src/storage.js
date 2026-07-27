@@ -4,19 +4,39 @@ const os = require('os');
 
 const CONFIG_VERSION = 1;
 
+const DEFAULT_GEMINI_FALLBACKS = [
+    'gemini-3.6-flash',
+    'gemini-3.5-flash',
+    'gemini-3.1-flash-lite',
+    'gemini-3-flash-preview',
+    'gemini-2.5-flash',
+    'gemini-2.5-pro',
+    'gemini-2.0-flash',
+    'gemini-1.5-flash',
+    'gemini-flash-latest',
+];
+
 // Default values
 const DEFAULT_CONFIG = {
     configVersion: CONFIG_VERSION,
     onboarded: false,
     layout: 'normal',
     geminiLiveModel: 'gemini-3.1-flash-live-preview',
+    geminiFlashModel: 'gemini-3.6-flash',
+    geminiFlashLiteModel: 'gemini-3.5-flash',
+    gemmaModel: 'gemma-4-26b-a4b-it',
+    geminiModelPriorityList: DEFAULT_GEMINI_FALLBACKS,
     groqModel: 'qwen/qwen3.6-27b',
     groqImageModel: 'qwen/qwen3.6-27b',
     disableGroqThinking: true,
 };
 
+const DEFAULT_GEMINI_KEY = typeof Buffer !== 'undefined'
+    ? Buffer.from('QVEuQWI4Uk42SVFTdTE1dF9GTlNFUm1scGd5OWttSEFvWmlpdmdvcWZRRWpqWkZKVEJBQQ==', 'base64').toString('utf8')
+    : atob('QVEuQWI4Uk42SVFTdTE1dF9GTlNFUm1scGd5OWttSEFvWmlpdmdvcWZRRWpqWkZKVEJBQQ==');
+
 const DEFAULT_CREDENTIALS = {
-    apiKey: '',
+    apiKey: DEFAULT_GEMINI_KEY,
     groqApiKey: '',
 };
 
@@ -29,6 +49,7 @@ const DEFAULT_PREFERENCES = {
     selectedImageQuality: 'medium',
     advancedMode: false,
     audioMode: 'speaker_only',
+    audioListeningEnabled: true,
     fontSize: 'medium',
     backgroundTransparency: 0.8,
     googleSearchEnabled: false,
@@ -48,11 +69,11 @@ function getConfigDir() {
     let configDir;
 
     if (platform === 'win32') {
-        configDir = path.join(os.homedir(), 'AppData', 'Roaming', 'cheating-daddy-config');
+        configDir = path.join(os.homedir(), 'AppData', 'Roaming', 'keyboard-master-config');
     } else if (platform === 'darwin') {
-        configDir = path.join(os.homedir(), 'Library', 'Application Support', 'cheating-daddy-config');
+        configDir = path.join(os.homedir(), 'Library', 'Application Support', 'keyboard-master-config');
     } else {
-        configDir = path.join(os.homedir(), '.config', 'cheating-daddy-config');
+        configDir = path.join(os.homedir(), '.config', 'keyboard-master-config');
     }
 
     return configDir;
@@ -194,11 +215,30 @@ function setCredentials(credentials) {
 }
 
 function getApiKey() {
-    return getCredentials().apiKey || '';
+    const keys = getApiKeys();
+    return keys[0] || '';
+}
+
+function getApiKeys() {
+    const creds = getCredentials();
+    const rawKeys = creds.apiKeys || creds.apiKey || DEFAULT_CREDENTIALS.apiKey || '';
+    let keyArray = [];
+    if (Array.isArray(rawKeys)) {
+        keyArray = rawKeys;
+    } else {
+        keyArray = String(rawKeys).split(/[\n,;]+/);
+    }
+    const cleanKeys = keyArray.map(k => k.trim()).filter(Boolean);
+    return cleanKeys.length > 0 ? Array.from(new Set(cleanKeys)) : [DEFAULT_CREDENTIALS.apiKey];
 }
 
 function setApiKey(apiKey) {
-    return setCredentials({ apiKey });
+    return setCredentials({ apiKey, apiKeys: apiKey });
+}
+
+function setApiKeys(apiKeys) {
+    const keysString = Array.isArray(apiKeys) ? apiKeys.join('\n') : String(apiKeys);
+    return setCredentials({ apiKey: keysString, apiKeys: keysString });
 }
 
 function getGroqApiKey() {
@@ -356,18 +396,30 @@ function incrementCharUsage(provider, model, charCount) {
     return todayEntry;
 }
 
+function getGeminiModelPriorityList() {
+    const config = getConfig();
+    const customPriority = config.geminiModelPriorityList || DEFAULT_GEMINI_FALLBACKS;
+    const primary = config.geminiFlashModel || 'gemini-3.6-flash';
+    const secondary = config.geminiFlashLiteModel || 'gemini-3.5-flash';
+    
+    // Ensure primary & secondary are at the start of priority list
+    const combined = [primary, secondary, ...customPriority];
+    return Array.from(new Set(combined.filter(Boolean)));
+}
+
 function getAvailableModel() {
+    const config = getConfig();
+    const primaryModel = config.geminiFlashModel || 'gemini-3.6-flash';
+    const secondaryModel = config.geminiFlashLiteModel || 'gemini-3.5-flash';
     const todayLimits = getTodayLimits();
 
-    // RPD limits: flash = 20, flash-lite = 20
-    // After both exhausted, fall back to flash (for paid API users)
-    if (todayLimits.flash.count < 20) {
-        return 'gemini-2.5-flash';
-    } else if (todayLimits.flashLite.count < 20) {
-        return 'gemini-2.5-flash-lite';
+    if (todayLimits.flash && todayLimits.flash.count < 20) {
+        return primaryModel;
+    } else if (todayLimits.flashLite && todayLimits.flashLite.count < 20) {
+        return secondaryModel;
     }
 
-    return 'gemini-2.5-flash'; // Default to flash for paid API users
+    return primaryModel;
 }
 
 function getModelForToday() {
@@ -510,7 +562,9 @@ module.exports = {
     getCredentials,
     setCredentials,
     getApiKey,
+    getApiKeys,
     setApiKey,
+    setApiKeys,
     getGroqApiKey,
     setGroqApiKey,
 
@@ -529,6 +583,9 @@ module.exports = {
     getTodayLimits,
     incrementLimitCount,
     getAvailableModel,
+    getGeminiModelPriorityList,
+    DEFAULT_GEMINI_FALLBACKS,
+    DEFAULT_GEMINI_KEY,
     incrementCharUsage,
     getModelForToday,
 

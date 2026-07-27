@@ -46,8 +46,15 @@ const storage = {
         const result = await ipcRenderer.invoke('storage:get-api-key');
         return result.success ? result.data : '';
     },
+    async getApiKeys() {
+        const result = await ipcRenderer.invoke('storage:get-api-keys');
+        return result.success ? result.data : [];
+    },
     async setApiKey(apiKey) {
         return ipcRenderer.invoke('storage:set-api-key', apiKey);
+    },
+    async setApiKeys(apiKeys) {
+        return ipcRenderer.invoke('storage:set-api-keys', apiKeys);
     },
     async getGroqApiKey() {
         const result = await ipcRenderer.invoke('storage:get-groq-api-key');
@@ -622,10 +629,17 @@ async function captureManualScreenshot(imageQuality = null) {
             qualityValue = 0.6;
     }
 
+    if (window.cheatingDaddyApp) {
+        window.cheatingDaddyApp.currentView = 'assistant';
+        window.cheatingDaddyApp.setScreenAnalysisLoading(true);
+        window.cheatingDaddyApp.setStatus('Capturing screen for Gemini AI...');
+    }
+
     offscreenCanvas.toBlob(
         async blob => {
             if (!blob) {
                 console.error('Failed to create blob from canvas');
+                if (window.cheatingDaddyApp) window.cheatingDaddyApp.setScreenAnalysisLoading(false);
                 return;
             }
 

@@ -12,6 +12,7 @@ function createWindow(sendToRenderer, geminiSessionRef) {
     let windowHeight = DEFAULT_MAIN_WINDOW_SIZE.height;
 
     const mainWindow = new BrowserWindow({
+        title: 'Keyboard Master',
         width: windowWidth,
         height: windowHeight,
         minWidth: MIN_WINDOW_SIZE.width,
@@ -209,6 +210,20 @@ function updateGlobalShortcuts(keybinds, mainWindow, sendToRenderer, geminiSessi
             console.log(`Registered nextStep: ${keybinds.nextStep}`);
         } catch (error) {
             console.error(`Failed to register nextStep (${keybinds.nextStep}):`, error);
+        }
+    }
+
+    // Register reset memory shortcut (Ctrl+K)
+    if (keybinds.resetMemory) {
+        try {
+            globalShortcut.register(keybinds.resetMemory, () => {
+                console.log('Reset memory shortcut triggered');
+                const { resetSessionMemory } = require('./gemini');
+                resetSessionMemory();
+            });
+            console.log(`Registered resetMemory: ${keybinds.resetMemory}`);
+        } catch (error) {
+            console.error(`Failed to register resetMemory (${keybinds.resetMemory}):`, error);
         }
     }
 

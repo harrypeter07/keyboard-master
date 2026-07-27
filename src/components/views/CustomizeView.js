@@ -226,6 +226,7 @@ export class CustomizeView extends LitElement {
     async _loadFromStorage() {
         try {
             const [prefs, keybinds] = await Promise.all([cheatingDaddy.storage.getPreferences(), cheatingDaddy.storage.getKeybinds()]);
+            this.audioListeningEnabled = prefs.audioListeningEnabled ?? true;
             this.googleSearchEnabled = prefs.googleSearchEnabled ?? true;
             this.backgroundTransparency = prefs.backgroundTransparency ?? 0.8;
             this.fontSize = prefs.fontSize ?? 20;
@@ -303,6 +304,7 @@ export class CustomizeView extends LitElement {
             nextResponse: isMac ? 'Cmd+]' : 'Ctrl+]',
             scrollUp: isMac ? 'Cmd+Shift+Up' : 'Ctrl+Shift+Up',
             scrollDown: isMac ? 'Cmd+Shift+Down' : 'Ctrl+Shift+Down',
+            resetMemory: isMac ? 'Cmd+K' : 'Ctrl+K',
         };
     }
 
@@ -315,6 +317,7 @@ export class CustomizeView extends LitElement {
             { key: 'toggleVisibility', name: 'Toggle Visibility', description: 'Show or hide the app window' },
             { key: 'toggleClickThrough', name: 'Toggle Click-through', description: 'Enable or disable click-through mode' },
             { key: 'nextStep', name: 'Ask Next Step', description: 'Take screenshot and ask for next step' },
+            { key: 'resetMemory', name: 'Reset Context Memory', description: 'Clear active session history and start fresh context' },
             { key: 'previousResponse', name: 'Previous Response', description: 'Move to previous AI response' },
             { key: 'nextResponse', name: 'Next Response', description: 'Move to next AI response' },
             { key: 'scrollUp', name: 'Scroll Response Up', description: 'Scroll response content upward' },
@@ -353,6 +356,12 @@ export class CustomizeView extends LitElement {
     async handleCustomPromptInput(e) {
         this.customPrompt = e.target.value;
         await cheatingDaddy.storage.updatePreference('customPrompt', this.customPrompt);
+    }
+
+    async handleAudioListeningChange(e) {
+        this.audioListeningEnabled = e.target.checked;
+        await cheatingDaddy.storage.updatePreference('audioListeningEnabled', this.audioListeningEnabled);
+        this.requestUpdate();
     }
 
     async handleAudioModeSelect(e) {
@@ -572,6 +581,10 @@ export class CustomizeView extends LitElement {
             <section class="surface">
                 <div class="surface-title">Audio Input</div>
                 <div class="form-grid">
+                    <div class="toggle-row" style="margin-bottom: 12px;">
+                        <input type="checkbox" class="toggle-input" id="audioListeningToggle" .checked=${this.audioListeningEnabled} @change=${this.handleAudioListeningChange} />
+                        <label class="toggle-label" for="audioListeningToggle">Enable Audio Listening (Mic & System Audio)</label>
+                    </div>
                     <div class="form-group">
                         <label class="form-label">Audio Mode</label>
                         <select class="control" .value=${this.audioMode} @change=${this.handleAudioModeSelect}>
