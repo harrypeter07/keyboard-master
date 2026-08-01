@@ -286,7 +286,24 @@ function updatePreference(key, value) {
 // ============ KEYBINDS ============
 
 function getKeybinds() {
-    return readJsonFile(getKeybindsPath(), DEFAULT_KEYBINDS);
+    const isMac = process.platform === 'darwin';
+    const defaults = {
+        moveUp: isMac ? 'Alt+Up' : 'Ctrl+Up',
+        moveDown: isMac ? 'Alt+Down' : 'Ctrl+Down',
+        moveLeft: isMac ? 'Alt+Left' : 'Ctrl+Left',
+        moveRight: isMac ? 'Alt+Right' : 'Ctrl+Right',
+        toggleVisibility: isMac ? 'Cmd+\\' : 'Ctrl+\\',
+        toggleClickThrough: isMac ? 'Cmd+M' : 'Ctrl+M',
+        nextStep: isMac ? 'Cmd+Enter' : 'Ctrl+Enter',
+        resetMemory: isMac ? 'Cmd+K' : 'Ctrl+K',
+        previousResponse: isMac ? 'Cmd+[' : 'Ctrl+[',
+        nextResponse: isMac ? 'Cmd+]' : 'Ctrl+]',
+        scrollUp: isMac ? 'Cmd+Shift+Up' : 'Ctrl+Shift+Up',
+        scrollDown: isMac ? 'Cmd+Shift+Down' : 'Ctrl+Shift+Down',
+        emergencyErase: isMac ? 'Cmd+Shift+E' : 'Ctrl+Shift+E',
+    };
+    const saved = readJsonFile(getKeybindsPath(), {});
+    return { ...defaults, ...saved };
 }
 
 function setKeybinds(keybinds) {
