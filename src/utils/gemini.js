@@ -3,7 +3,7 @@ const { BrowserWindow, ipcMain } = require('electron');
 const { spawn } = require('child_process');
 const { saveDebugAudio } = require('../audioUtils');
 const { getSystemPrompt } = require('./prompts');
-const { getAvailableModel, incrementLimitCount, getApiKey, getApiKeys, getGroqApiKey, incrementCharUsage, getConfig, getGeminiModelPriorityList, getPreferences } = require('../storage');
+const { getAvailableModel, incrementLimitCount, getApiKey, getApiKeys, getActiveKeyIndex, setActiveKeyIndex, getGroqApiKey, incrementCharUsage, getConfig, getGeminiModelPriorityList, getPreferences } = require('../storage');
 const { connectCloud, sendCloudAudio, sendCloudText, sendCloudImage, closeCloud, isCloudActive, setOnTurnComplete } = require('./cloud');
 const { startTransportLog, logTransportEvent, closeTransportLog } = require('./transportLogger');
 
@@ -1035,9 +1035,11 @@ async function sendImageToGeminiHttp(base64Data, prompt) {
     ];
 
     let lastError = null;
+    const startIndex = getActiveKeyIndex();
 
-    // Outer Loop: Iterate through all available Gemini API Keys
-    for (let keyIdx = 0; keyIdx < apiKeys.length; keyIdx++) {
+    // Outer Loop: Iterate through all available Gemini API Keys starting from activeKeyPointer
+    for (let attempt = 0; attempt < apiKeys.length; attempt++) {
+        const keyIdx = (startIndex + attempt) % apiKeys.length;
         const apiKey = apiKeys[keyIdx];
         const ai = new GoogleGenAI({ apiKey: apiKey });
 
@@ -1068,6 +1070,9 @@ async function sendImageToGeminiHttp(base64Data, prompt) {
                         isFirst = false;
                     }
                 }
+
+                // Save current working active key index so subsequent calls don't retry exhausted keys!
+                setActiveKeyIndex(keyIdx);
 
                 // Turn off loader card
                 sendToRenderer('screen-analysis-loading', false);

@@ -979,7 +979,7 @@ export class MainView extends LitElement {
     }
 
     async _addGeminiKey() {
-        this._geminiKeys = [...this._geminiKeys, ''];
+        this._geminiKeys = ['', ...this._geminiKeys];
         this.requestUpdate();
     }
 

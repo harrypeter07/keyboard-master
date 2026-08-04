@@ -239,6 +239,33 @@ function getApiKeys() {
     return allKeys;
 }
 
+let activeKeyPointer = 0;
+
+function getActiveKeyIndex() {
+    return activeKeyPointer;
+}
+
+function setActiveKeyIndex(index) {
+    const keys = getApiKeys();
+    if (keys.length > 0) {
+        activeKeyPointer = Math.abs(index) % keys.length;
+    } else {
+        activeKeyPointer = 0;
+    }
+    return activeKeyPointer;
+}
+
+function addApiKey(newKey) {
+    if (!newKey || typeof newKey !== 'string' || !newKey.trim()) return getApiKeys();
+    const cleanNewKey = newKey.trim();
+    const currentKeys = getApiKeys();
+    const filtered = currentKeys.filter(k => k !== cleanNewKey);
+    const updatedKeys = [cleanNewKey, ...filtered];
+    setApiKeys(updatedKeys);
+    activeKeyPointer = 0; // Prepend new key to top as Key #1 (Primary)
+    return updatedKeys;
+}
+
 function setApiKey(apiKey) {
     return setCredentials({ apiKey, apiKeys: apiKey });
 }
@@ -587,6 +614,9 @@ module.exports = {
     setCredentials,
     getApiKey,
     getApiKeys,
+    addApiKey,
+    getActiveKeyIndex,
+    setActiveKeyIndex,
     setApiKey,
     setApiKeys,
     getGroqApiKey,
