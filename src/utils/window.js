@@ -49,6 +49,21 @@ function createWindow(sendToRenderer, geminiSessionRef) {
         mainWindow.setAlwaysOnTop(true, 'screen-saver', 1);
     }
 
+    // Re-enforce content protection and stealth exclusion on window state changes
+    mainWindow.on('show', () => {
+        try {
+            mainWindow.setContentProtection(true);
+        } catch (e) {
+            console.warn('Could not set content protection on show:', e.message);
+        }
+    });
+
+    mainWindow.on('restore', () => {
+        try {
+            mainWindow.setContentProtection(true);
+        } catch (e) {}
+    });
+
     // Hide from Windows taskbar
     if (process.platform === 'win32') {
         try {
