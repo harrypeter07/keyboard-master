@@ -19,6 +19,11 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'AdminPassword2026!';
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
+// Public Showcase Landing Page
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'landing.html'));
+});
+
 // Static Admin Dashboard Page
 app.get('/admin', (req, res) => {
     res.sendFile(path.join(__dirname, 'admin-dashboard.html'));

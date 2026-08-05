@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keyboard Master - Ultimate AI Desktop Assistant</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #07090e;
+            --surface: rgba(17, 24, 39, 0.7);
+            --surface-elevated: rgba(31, 41, 55, 0.8);
+            --border: rgba(255, 255, 255, 0.12);
+            --primary: #3b82f6;
+            --primary-glow: rgba(59, 130, 246, 0.5);
+            --accent: #8b5cf6;
+            --accent-glow: rgba(139, 92, 246, 0.5);
+            --text: #f9fafb;
+            --muted: #9ca3af;
+            --success: #10b981;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', 'Inter', sans-serif;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* ── Animated Background ── */
+        .ambient-bg {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.4;
+            animation: float 20s infinite ease-in-out alternate;
+        }
+
+        .orb-1 { width: 500px; height: 500px; background: var(--primary); top: -100px; left: -100px; }
+        .orb-2 { width: 600px; height: 600px; background: var(--accent); bottom: -150px; right: -150px; animation-delay: -10s; }
+
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(80px, 60px) scale(1.15); }
+        }
+
+        /* ── Header Nav ── */
+        header {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.4rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #ffffff, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover { color: var(--text); }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 0.85rem 1.8rem;
+            border-radius: 100px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: none;
+        }
+
+        .btn-glow {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            box-shadow: 0 10px 30px var(--primary-glow);
+        }
+
+        .btn-glow:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 40px var(--accent-glow);
+        }
+
+        /* ── Hero Section ── */
+        .hero {
+            max-width: 1200px;
+            margin: 3rem auto 6rem auto;
+            padding: 0 2rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0.4rem 1rem;
+            border-radius: 100px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .hero h1 {
+            font-size: 4rem;
+            font-weight: 800;
+            line-height: 1.1;
+            letter-spacing: -1.5px;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(180deg, #ffffff 0%, rgba(255, 255, 255, 0.7) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: var(--muted);
+            max-width: 700px;
+            margin: 0 auto 2.5rem auto;
+            font-weight: 400;
+        }
+
+        .hero-actions {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-bottom: 4rem;
+        }
+
+        /* ── Animated App Mockup ── */
+        .mockup-wrapper {
+            position: relative;
+            max-width: 900px;
+            margin: 0 auto;
+            border-radius: 20px;
+            padding: 8px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.02));
+            box-shadow: 0 30px 80px rgba(0,0,0,0.8);
+        }
+
+        .mockup-card {
+            background: #0f172a;
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            text-align: left;
+        }
+
+        .mockup-header {
+            background: #1e293b;
+            padding: 12px 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dot { width: 10px; height: 10px; border-radius: 50%; }
+        .dot-red { background: #ef4444; }
+        .dot-yellow { background: #f59e0b; }
+        .dot-green { background: #10b981; }
+
+        .mockup-body {
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .chat-bubble {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            animation: pulse-glow 3s infinite ease-in-out;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { border-color: var(--border); }
+            50% { border-color: var(--primary); }
+        }
+
+        /* ── Features Grid ── */
+        .features {
+            max-width: 1200px;
+            margin: 6rem auto;
+            padding: 0 2rem;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 3rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2rem;
+        }
+
+        .card {
+            background: var(--surface);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 2.2rem;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+            box-shadow: 0 20px 40px rgba(59, 130, 246, 0.15);
+        }
+
+        .card-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.2));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            color: var(--primary);
+        }
+
+        .card h3 { font-size: 1.3rem; margin-bottom: 0.8rem; font-weight: 600; }
+        .card p { color: var(--muted); font-size: 0.95rem; }
+
+        /* ── Download CTA Section ── */
+        .download-cta {
+            max-width: 1000px;
+            margin: 6rem auto;
+            padding: 4rem 2rem;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(139, 92, 246, 0.15));
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 28px;
+            text-align: center;
+            backdrop-filter: blur(20px);
+        }
+
+        .download-cta h2 { font-size: 2.5rem; margin-bottom: 1rem; font-weight: 800; }
+        .download-cta p { color: var(--muted); font-size: 1.1rem; margin-bottom: 2rem; }
+
+        /* ── Footer ── */
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 3rem 2rem;
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="ambient-bg">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+    </div>
+
+    <header>
+        <div class="logo">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+            </svg>
+            Keyboard Master
+        </div>
+        <ul class="nav-links">
+            <li><a href="#features">Features</a></li>
+            <li><a href="#pricing">Pricing</a></li>
+            <li><a href="#download">Download</a></li>
+            <li><a href="/admin" target="_blank">Admin Portal</a></li>
+        </ul>
+    </header>
+
+    <main>
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="badge">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
+                Next-Gen AI Desktop Assistant v0.8.0
+            </div>
+            <h1>Supercharge Your Desktop<br>With Real-Time AI Vision</h1>
+            <p>Capture screen contexts instantly, failover seamlessly across 10+ Gemini models, and maintain continuous conversation memory with zero effort.</p>
+            <div class="hero-actions">
+                <a href="#download" class="btn btn-glow">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                    Download Setup (.exe)
+                </a>
+            </div>
+
+            <!-- Mockup Preview -->
+            <div class="mockup-wrapper">
+                <div class="mockup-card">
+                    <div class="mockup-header">
+                        <div class="dot dot-red"></div>
+                        <div class="dot dot-yellow"></div>
+                        <div class="dot dot-green"></div>
+                        <span style="font-size: 0.8rem; color: #94a3b8; margin-left: 10px;">Keyboard Master Assistant</span>
+                    </div>
+                    <div class="mockup-body">
+                        <div class="chat-bubble">
+                            <strong style="color: var(--primary);">User (Ctrl + Enter):</strong>
+                            <p style="margin-top: 4px; color: #cbd5e1;">Analyze this coding problem on screen and explain the optimal solution.</p>
+                        </div>
+                        <div class="chat-bubble" style="background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.3);">
+                            <strong style="color: #38bdf8;">Gemini AI Assistant (Resilient Engine):</strong>
+                            <p style="margin-top: 4px; color: #f8fafc;">Here is the O(N) solution using a HashMap to track standard array indices...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Grid -->
+        <section id="features" class="features">
+            <h2 class="section-title">Engineered For Performance & Reliability</h2>
+            <div class="grid">
+                <div class="card">
+                    <div class="card-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                    </div>
+                    <h3>Smart Pointer Failover</h3>
+                    <p>Rotates automatically across 10+ Gemini models and multiple API keys. Saves active key state so you never hit rate limit bottlenecks.</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                    </div>
+                    <h3>Continuous Session Context</h3>
+                    <p>Maintains turn-by-turn memory across consecutive screen captures. Refresh session anytime with global shortcut <code>Ctrl + K</code>.</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    </div>
+                    <h3>MongoDB Licensing Server</h3>
+                    <p>Includes remote administration, account management, device lockout capabilities, and Web Admin control interface.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Download CTA -->
+        <section id="download" class="download-cta">
+            <h2>Get Started With Keyboard Master</h2>
+            <p>Download the latest release package for Windows x64.</p>
+            <a href="https://github.com/harrypeter07/keyboard-master/releases/download/v0.8.0/Keyboard.Master-0.8.0.Setup.exe" class="btn btn-glow" id="downloadBtn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                Download Keyboard Master Setup (.exe)
+            </a>
+            <p style="font-size: 0.85rem; margin-top: 1rem; color: var(--muted);">Direct GitHub Release CDN Download • Windows 10/11 64-bit</p>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 Keyboard Master. All rights reserved.</p>
+    </footer>
+
+</body>
+</html>
