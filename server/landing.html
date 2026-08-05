@@ -543,39 +543,6 @@
         </div>
     </section>
 
-    <!-- DRM Stealth Overlay Interactive Showcase -->
-    <section id="drm-stealth" class="features" style="margin-top: 4rem;">
-        <div class="section-header gsap-reveal">
-            <h2>Hardware-Level Stealth & Screenshot Protection</h2>
-            <p style="color: var(--text-muted); max-width: 680px; margin: 0.8rem auto 0 auto; font-size: 1.05rem;">
-                Powered by WebGL Hardware Protected Swapchain & OS Desktop Window Manager (DWM) Display Affinity.
-            </p>
-        </div>
-
-        <div class="mockup-container gsap-reveal" style="max-width: 900px;">
-            <div class="mockup-inner" style="background: var(--surface-neo); box-shadow: var(--neo-shadow-in); padding: 2.5rem;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                    <div>
-                        <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.4rem; color: #ffffff;">Hardware WebGL Protected Surface</h3>
-                        <p style="font-size: 0.88rem; color: var(--text-muted);">Visible on your physical display, but captures as 100% black (0x000000) to DWM & Snipping Tool.</p>
-                    </div>
-                </div>
-
-                <!-- WebGL Hardware Protected Swapchain Surface -->
-                <div id="captureSurface" style="background: #000000; border-radius: 16px; border: 1px solid rgba(0, 242, 254, 0.3); overflow: hidden; position: relative; min-height: 340px;">
-                    <canvas id="drmWebGLCanvas" class="drm-canvas" width="900" height="340"></canvas>
-                </div>
-
-                <!-- Technical Badges -->
-                <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 1.8rem; justify-content: center;">
-                    <span style="font-size: 0.78rem; background: var(--surface-elevated); padding: 4px 12px; border-radius: 8px; color: var(--cyan); border: 1px solid rgba(255,255,255,0.06);">WebGL(preserveDrawingBuffer: false)</span>
-                    <span style="font-size: 0.78rem; background: var(--surface-elevated); padding: 4px 12px; border-radius: 8px; color: var(--magenta); border: 1px solid rgba(255,255,255,0.06);">Widevine L1 Hardware Protected Swapchain</span>
-                    <span style="font-size: 0.78rem; background: var(--surface-elevated); padding: 4px 12px; border-radius: 8px; color: #10b981; border: 1px solid rgba(255,255,255,0.06);">Zero-DWM Memory Buffer Leak</span>
-                </div>
-            </div>
-        </div>
-    </section>
-
     <!-- Pricing Section (INR ₹) -->
     <section id="pricing" class="pricing">
         <div class="section-header gsap-reveal">
@@ -622,7 +589,7 @@
         <p>&copy; 2026 Keyboard Master. All rights reserved.</p>
     </footer>
 
-    <!-- GSAP & WebGL DRM Engine Script -->
+    <!-- GSAP Animations Script -->
     <script>
         gsap.registerPlugin(ScrollTrigger);
 
@@ -662,97 +629,6 @@
                 ease: "power2.out"
             });
         });
-
-        // WebGL Protected Swapchain Pipeline (preserveDrawingBuffer: false)
-        (function initProtectedWebGL() {
-            const canvas = document.getElementById('drmWebGLCanvas');
-            if (!canvas) return;
-
-            const gl = canvas.getContext('webgl', {
-                preserveDrawingBuffer: false, // Disables DWM pixel readback on capture!
-                alpha: false
-            });
-
-            if (!gl) return;
-
-            // Load UI Preview Texture
-            const img = new Image();
-            img.src = '/km_app_preview.jpg';
-            img.onload = () => {
-                const texture = gl.createTexture();
-                gl.bindTexture(gl.TEXTURE_2D, texture);
-                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-
-                // Shaders
-                const vsSource = `
-                    attribute vec2 a_position;
-                    attribute vec2 a_texCoord;
-                    varying vec2 v_texCoord;
-                    void main() {
-                        gl_Position = vec4(a_position, 0.0, 1.0);
-                        v_texCoord = vec2(a_texCoord.x, 1.0 - a_texCoord.y);
-                    }
-                `;
-
-                const fsSource = `
-                    precision mediump float;
-                    uniform sampler2D u_image;
-                    varying vec2 v_texCoord;
-                    void main() {
-                        gl_FragColor = texture2D(u_image, v_texCoord);
-                    }
-                `;
-
-                function createShader(gl, type, source) {
-                    const shader = gl.createShader(type);
-                    gl.shaderSource(shader, source);
-                    gl.compileShader(shader);
-                    return shader;
-                }
-
-                const vs = createShader(gl, gl.VERTEX_SHADER, vsSource);
-                const fs = createShader(gl, gl.FRAGMENT_SHADER, fsSource);
-                const program = gl.createProgram();
-                gl.attachShader(program, vs);
-                gl.attachShader(program, fs);
-                gl.linkProgram(program);
-                gl.useProgram(program);
-
-                const positionBuffer = gl.createBuffer();
-                gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-                gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
-                    -1, -1,  1, -1, -1,  1,
-                    -1,  1,  1, -1,  1,  1,
-                ]), gl.STATIC_DRAW);
-
-                const positionLocation = gl.getAttribLocation(program, "a_position");
-                gl.enableVertexAttribArray(positionLocation);
-                gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
-
-                const texCoordBuffer = gl.createBuffer();
-                gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
-                gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
-                    0, 0,  1, 0,  0, 1,
-                    0, 1,  1, 0,  1, 1,
-                ]), gl.STATIC_DRAW);
-
-                const texCoordLocation = gl.getAttribLocation(program, "a_texCoord");
-                gl.enableVertexAttribArray(texCoordLocation);
-                gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 0, 0);
-
-                // Continuous WebGL Render Loop (presents to monitor, flushes buffer for capture)
-                function render() {
-                    gl.clearColor(0.0, 0.0, 0.0, 1.0);
-                    gl.clear(gl.COLOR_BUFFER_BIT);
-                    gl.drawArrays(gl.TRIANGLES, 0, 6);
-                    requestAnimationFrame(render);
-                }
-                requestAnimationFrame(render);
-            };
-        })();
     </script>
 </body>
 </html>
