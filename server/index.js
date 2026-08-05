@@ -70,6 +70,11 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'landing.html'));
 });
 
+// App Preview Image Asset
+app.get('/km_app_preview.jpg', (req, res) => {
+    res.sendFile(path.join(__dirname, 'km_app_preview.jpg'));
+});
+
 // Dynamic Download Redirect Route (Hides GitHub / Cloud Provider)
 app.get('/download-installer', (req, res) => {
     const downloadUrl = process.env.DOWNLOAD_URL || 'https://drive.google.com';

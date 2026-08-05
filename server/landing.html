@@ -553,27 +553,10 @@
                     </button>
                 </div>
 
-                <!-- Protected Surface Canvas -->
-                <div id="captureSurface" style="background: #090d16; border-radius: 16px; border: 1px solid rgba(0, 242, 254, 0.2); padding: 30px; min-height: 200px; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: all 0.5s ease; position: relative;">
-                    <div id="normalState" style="text-align: center;">
-                        <div style="display: inline-flex; padding: 8px 16px; border-radius: 100px; background: rgba(0,242,254,0.1); color: var(--cyan); font-size: 0.85rem; font-weight: 700; margin-bottom: 12px;">
-                            👁️ REAL-TIME DISPLAY AFFINITY: ACTIVE
-                        </div>
-                        <h4 style="font-size: 1.2rem; margin-bottom: 8px; color: #ffffff;">Content Visible On Your Monitor</h4>
-                        <p style="font-size: 0.9rem; color: var(--text-muted); max-width: 500px;">
-                            Full real-time AI assistance overlay rendered cleanly for your eyes only.
-                        </p>
-                    </div>
-
-                    <div id="capturedState" style="display: none; text-align: center;">
-                        <div style="display: inline-flex; padding: 8px 16px; border-radius: 100px; background: rgba(239,68,68,0.15); color: #ef4444; font-size: 0.85rem; font-weight: 700; margin-bottom: 12px;">
-                            🔒 CAPTURED SCREENSHOT / OBS OUTPUT: BLACKED OUT
-                        </div>
-                        <h4 style="font-size: 1.2rem; margin-bottom: 8px; color: #ef4444;">Solid Black Surface (0x000000)</h4>
-                        <p style="font-size: 0.9rem; color: #94a3b8; max-width: 500px;">
-                            Screen recorders, Snipping Tool, Zoom, and remote sharing receive 0x000000 black frame.
-                        </p>
-                    </div>
+                <!-- Protected Surface Container with App Image -->
+                <div id="captureSurface" style="background: #090d16; border-radius: 16px; border: 1px solid rgba(0, 242, 254, 0.2); overflow: hidden; position: relative; min-height: 320px; display: flex; align-items: center; justify-content: center; transition: all 0.4s ease;">
+                    <img id="protectedAppImage" src="/km_app_preview.jpg" alt="Keyboard Master UI Preview" style="width: 100%; height: 320px; object-fit: cover; border-radius: 14px; transition: opacity 0.2s ease, filter 0.2s ease;" />
+                    <div id="blackoutOverlay" style="position: absolute; inset: 0; background: #000000; opacity: 0; pointer-events: none; transition: opacity 0.2s ease;"></div>
                 </div>
 
                 <!-- Technical Badges -->
@@ -591,29 +574,18 @@
         let isSimulatingCapture = false;
 
         function applyPureBlackout() {
-            const surface = document.getElementById('captureSurface');
-            if (!surface) return;
-            surface.style.background = '#000000';
-            surface.style.borderColor = '#000000';
-            surface.innerHTML = '<div style="min-height: 180px; width: 100%; background: #000000; display: flex; align-items: center; justify-content: center;"><span style="color: #000000;"></span></div>';
+            const img = document.getElementById('protectedAppImage');
+            const overlay = document.getElementById('blackoutOverlay');
+            if (img) img.style.opacity = '0';
+            if (overlay) overlay.style.opacity = '1';
         }
 
         function restoreSurfaceContent() {
-            const surface = document.getElementById('captureSurface');
-            if (!surface) return;
-            surface.style.background = '#090d16';
-            surface.style.borderColor = 'rgba(0, 242, 254, 0.2)';
-            surface.innerHTML = `
-                <div id="normalState" style="text-align: center;">
-                    <div style="display: inline-flex; padding: 8px 16px; border-radius: 100px; background: rgba(0,242,254,0.1); color: var(--cyan); font-size: 0.85rem; font-weight: 700; margin-bottom: 12px;">
-                        👁️ REAL-TIME DISPLAY AFFINITY: ACTIVE
-                    </div>
-                    <h4 style="font-size: 1.2rem; margin-bottom: 8px; color: #ffffff;">Content Visible On Your Monitor</h4>
-                    <p style="font-size: 0.9rem; color: var(--text-muted); max-width: 500px;">
-                        Full real-time AI assistance overlay rendered cleanly for your eyes only.
-                    </p>
-                </div>
-            `;
+            const img = document.getElementById('protectedAppImage');
+            const overlay = document.getElementById('blackoutOverlay');
+            if (img) img.style.opacity = '1';
+            if (overlay) overlay.style.opacity = '0';
+
             isSimulatingCapture = false;
             const btn = document.getElementById('simToggleBtn');
             if (btn) {
