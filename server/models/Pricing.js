@@ -3,11 +3,11 @@ const mongoose = require('mongoose');
 const PricingSchema = new mongoose.Schema({
     weeklyPriceUsd: {
         type: Number,
-        default: 9.99,
+        default: 499,
     },
     monthlyPriceUsd: {
         type: Number,
-        default: 29.99,
+        default: 1499,
     },
     serverGeminiApiKey: {
         type: String,

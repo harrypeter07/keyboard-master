@@ -153,8 +153,8 @@ export class PricingModal extends LitElement {
     constructor() {
         super();
         this.isOpen = false;
-        this.weeklyPrice = 9.99;
-        this.monthlyPrice = 29.99;
+        this.weeklyPrice = 499;
+        this.monthlyPrice = 1499;
         this.onClose = () => {};
         this.onSelectPlan = () => {};
     }
@@ -172,7 +172,7 @@ export class PricingModal extends LitElement {
                     <div class="plan-card">
                         <div class="plan-badge">Popular</div>
                         <div class="plan-name">Weekly Pass</div>
-                        <div class="plan-price">$${this.weeklyPrice} <span>/ week</span></div>
+                        <div class="plan-price">₹${this.weeklyPrice} <span>/ week</span></div>
                         <ul class="plan-features">
                             <li>✓ Unlimited Cloud AI Access</li>
                             <li>✓ No Gemini API Key Needed</li>
@@ -185,7 +185,7 @@ export class PricingModal extends LitElement {
                     <div class="plan-card">
                         <div class="plan-badge" style="background: rgba(16,185,129,0.2); color: #10b981;">Best Value</div>
                         <div class="plan-name">Monthly VIP</div>
-                        <div class="plan-price">$${this.monthlyPrice} <span>/ month</span></div>
+                        <div class="plan-price">₹${this.monthlyPrice} <span>/ month</span></div>
                         <ul class="plan-features">
                             <li>✓ Unlimited Cloud AI Access</li>
                             <li>✓ No Gemini API Key Needed</li>
