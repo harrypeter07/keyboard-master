@@ -531,7 +531,86 @@
                 <p>Complete remote device heartbeats, account authorization, device kill switch, and Web Admin dashboard control.</p>
             </div>
         </div>
+    <!-- DRM Stealth Overlay Interactive Showcase -->
+    <section id="drm-stealth" class="features" style="margin-top: 4rem;">
+        <div class="section-header gsap-reveal">
+            <h2>Hardware-Level Stealth & Screenshot Protection</h2>
+            <p style="color: var(--text-muted); max-width: 680px; margin: 0.8rem auto 0 auto; font-size: 1.05rem;">
+                Powered by OS Desktop Window Manager (DWM) Display Affinity & Hardware-Protected Surface Layers.
+            </p>
+        </div>
+
+        <div class="mockup-container gsap-reveal" style="max-width: 900px;">
+            <div class="mockup-inner" style="background: var(--surface-neo); box-shadow: var(--neo-shadow-in); padding: 2.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <div>
+                        <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.4rem; color: #ffffff;">Interactive Capture Protection Simulator</h3>
+                        <p style="font-size: 0.88rem; color: var(--text-muted);">See how OS-level display affinity masks content during screen capture attempt.</p>
+                    </div>
+                    <button class="btn-neo" id="simToggleBtn" onclick="toggleSimulatedCapture()" style="border-color: var(--cyan); color: var(--cyan); font-size: 0.85rem; padding: 0.6rem 1.4rem;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                        Test Screen Capture Output
+                    </button>
+                </div>
+
+                <!-- Protected Surface Canvas -->
+                <div id="captureSurface" style="background: #090d16; border-radius: 16px; border: 1px solid rgba(0, 242, 254, 0.2); padding: 30px; min-height: 200px; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: all 0.5s ease; position: relative;">
+                    <div id="normalState" style="text-align: center;">
+                        <div style="display: inline-flex; padding: 8px 16px; border-radius: 100px; background: rgba(0,242,254,0.1); color: var(--cyan); font-size: 0.85rem; font-weight: 700; margin-bottom: 12px;">
+                            👁️ REAL-TIME DISPLAY AFFINITY: ACTIVE
+                        </div>
+                        <h4 style="font-size: 1.2rem; margin-bottom: 8px; color: #ffffff;">Content Visible On Your Monitor</h4>
+                        <p style="font-size: 0.9rem; color: var(--text-muted); max-width: 500px;">
+                            Full real-time AI assistance overlay rendered cleanly for your eyes only.
+                        </p>
+                    </div>
+
+                    <div id="capturedState" style="display: none; text-align: center;">
+                        <div style="display: inline-flex; padding: 8px 16px; border-radius: 100px; background: rgba(239,68,68,0.15); color: #ef4444; font-size: 0.85rem; font-weight: 700; margin-bottom: 12px;">
+                            🔒 CAPTURED SCREENSHOT / OBS OUTPUT: BLACKED OUT
+                        </div>
+                        <h4 style="font-size: 1.2rem; margin-bottom: 8px; color: #ef4444;">Solid Black Surface (0x000000)</h4>
+                        <p style="font-size: 0.9rem; color: #94a3b8; max-width: 500px;">
+                            Screen recorders, Snipping Tool, Zoom, and remote sharing receive 0x000000 black frame.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Technical Badges -->
+                <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 1.8rem; justify-content: center;">
+                    <span style="font-size: 0.78rem; background: var(--surface-elevated); padding: 4px 12px; border-radius: 8px; color: var(--cyan); border: 1px solid rgba(255,255,255,0.06);">SetWindowDisplayAffinity(WDA_EXCLUDEFROMCAPTURE)</span>
+                    <span style="font-size: 0.78rem; background: var(--surface-elevated); padding: 4px 12px; border-radius: 8px; color: var(--magenta); border: 1px solid rgba(255,255,255,0.06);">Widevine L1 / PlayReady Protection Architecture</span>
+                    <span style="font-size: 0.78rem; background: var(--surface-elevated); padding: 4px 12px; border-radius: 8px; color: #10b981; border: 1px solid rgba(255,255,255,0.06);">Zero-DWM Memory Footprint</span>
+                </div>
+            </div>
+        </div>
     </section>
+
+    <!-- JS for Interactive Simulator -->
+    <script>
+        let isSimulatingCapture = false;
+        function toggleSimulatedCapture() {
+            isSimulatingCapture = !isSimulatingCapture;
+            const surface = document.getElementById('captureSurface');
+            const normal = document.getElementById('normalState');
+            const captured = document.getElementById('capturedState');
+            const btn = document.getElementById('simToggleBtn');
+
+            if (isSimulatingCapture) {
+                surface.style.background = '#000000';
+                surface.style.borderColor = '#ef4444';
+                normal.style.display = 'none';
+                captured.style.display = 'block';
+                btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> Reset To User Monitor View`;
+            } else {
+                surface.style.background = '#090d16';
+                surface.style.borderColor = 'rgba(0, 242, 254, 0.2)';
+                normal.style.display = 'block';
+                captured.style.display = 'none';
+                btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg> Test Screen Capture Output`;
+            }
+        }
+    </script>
 
     <!-- Pricing Section (INR ₹) -->
     <section id="pricing" class="pricing">
