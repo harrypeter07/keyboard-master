@@ -18,6 +18,7 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'AdminPassword2026!';
 
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
+app.use(express.static(__dirname));
 
 // Lazy MongoDB Connection Middleware for Vercel Serverless & Standalone
 let isDbConnected = false;
