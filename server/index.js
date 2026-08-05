@@ -70,6 +70,12 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'landing.html'));
 });
 
+// Dynamic Download Redirect Route (Hides GitHub / Cloud Provider)
+app.get('/download-installer', (req, res) => {
+    const downloadUrl = process.env.DOWNLOAD_URL || 'https://drive.google.com';
+    res.redirect(downloadUrl);
+});
+
 // Static Admin Dashboard Page
 app.get('/admin', (req, res) => {
     res.sendFile(path.join(__dirname, 'admin-dashboard.html'));
