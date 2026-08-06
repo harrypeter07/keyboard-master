@@ -365,10 +365,14 @@
                     body: JSON.stringify({ email, password })
                 });
                 const data = await res.json();
-                if (data.success && data.user.role === 'admin') {
-                    adminToken = data.token;
-                    localStorage.setItem('km_admin_token', adminToken);
-                    loadDashboard();
+                if (data.success) {
+                    if (data.user.role === 'admin') {
+                        adminToken = data.token;
+                        localStorage.setItem('km_admin_token', adminToken);
+                        loadDashboard();
+                    } else {
+                        errorDiv.innerText = 'Access denied. Account does not have administrator privileges.';
+                    }
                 } else {
                     errorDiv.innerText = data.error || 'Admin login failed.';
                 }

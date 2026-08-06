@@ -71,7 +71,7 @@ router.post('/login', async (req, res) => {
 
         const user = await User.findOne({ email: email.toLowerCase() });
         if (!user) {
-            return res.status(400).json({ success: false, error: 'Invalid credentials.' });
+            return res.status(400).json({ success: false, error: 'Invalid email. No account exists with this email address.' });
         }
 
         if (user.isBanned) {
@@ -84,7 +84,7 @@ router.post('/login', async (req, res) => {
 
         const isMatch = await bcrypt.compare(password, user.passwordHash);
         if (!isMatch) {
-            return res.status(400).json({ success: false, error: 'Invalid credentials.' });
+            return res.status(400).json({ success: false, error: 'Incorrect password. Please check your password and try again.' });
         }
 
         user.lastIp = ip;
