@@ -253,7 +253,7 @@
                 <label>Password</label>
                 <input type="password" id="adminPassword" class="form-control" placeholder="••••••••">
             </div>
-            <button class="btn btn-primary" onclick="loginAdmin()">Sign In to Dashboard</button>
+            <button id="loginBtn" class="btn btn-primary" onclick="loginAdmin()">Sign In to Dashboard</button>
             <div id="authError" style="color: var(--danger); font-size: 0.85rem; margin-top: 1rem; text-align: center;"></div>
         </div>
 
@@ -353,10 +353,26 @@
         }
 
         async function loginAdmin() {
-            const email = document.getElementById('adminEmail').value;
-            const password = document.getElementById('adminPassword').value;
+            const emailInput = document.getElementById('adminEmail');
+            const passwordInput = document.getElementById('adminPassword');
+            const loginBtn = document.getElementById('loginBtn');
             const errorDiv = document.getElementById('authError');
-            errorDiv.innerText = '';
+            
+            const email = emailInput ? emailInput.value.trim() : '';
+            const password = passwordInput ? passwordInput.value.trim() : '';
+            
+            errorDiv.innerHTML = '';
+
+            if (!email || !password) {
+                errorDiv.innerHTML = '<div style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); padding: 10px; border-radius: 8px;">Please enter both admin email and password.</div>';
+                return;
+            }
+
+            // Show Loading State
+            if (loginBtn) {
+                loginBtn.disabled = true;
+                loginBtn.innerHTML = '⚡ Verifying Credentials...';
+            }
 
             try {
                 const res = await fetch('/api/auth/login', {
@@ -369,15 +385,28 @@
                     if (data.user.role === 'admin') {
                         adminToken = data.token;
                         localStorage.setItem('km_admin_token', adminToken);
-                        loadDashboard();
+                        if (loginBtn) loginBtn.innerHTML = '✓ Access Granted! Loading...';
+                        await loadDashboard();
                     } else {
-                        errorDiv.innerText = 'Access denied. Account does not have administrator privileges.';
+                        errorDiv.innerHTML = '<div style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); padding: 10px; border-radius: 8px;">Access denied. Account does not have administrator privileges.</div>';
+                        if (loginBtn) {
+                            loginBtn.disabled = false;
+                            loginBtn.innerHTML = 'Sign In to Dashboard';
+                        }
                     }
                 } else {
-                    errorDiv.innerText = data.error || 'Admin login failed.';
+                    errorDiv.innerHTML = `<div style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); padding: 10px; border-radius: 8px;">${data.error || 'Admin login failed.'}</div>`;
+                    if (loginBtn) {
+                        loginBtn.disabled = false;
+                        loginBtn.innerHTML = 'Sign In to Dashboard';
+                    }
                 }
             } catch (err) {
-                errorDiv.innerText = 'Server connection error.';
+                errorDiv.innerHTML = '<div style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); padding: 10px; border-radius: 8px;">Server connection error. Please try again.</div>';
+                if (loginBtn) {
+                    loginBtn.disabled = false;
+                    loginBtn.innerHTML = 'Sign In to Dashboard';
+                }
             }
         }
 
@@ -387,69 +416,94 @@
         }
 
         async function loadDashboard() {
-            document.getElementById('authView').classList.add('hidden');
-            document.getElementById('dashView').classList.remove('hidden');
-            document.getElementById('logoutBtn').classList.remove('hidden');
-
             try {
                 const res = await fetch('/api/admin/users', {
                     headers: { 'Authorization': `Bearer ${adminToken}` }
                 });
                 const data = await res.json();
+
                 if (!data.success) {
-                    logout();
+                    const errorDiv = document.getElementById('authError');
+                    if (errorDiv) {
+                        errorDiv.innerHTML = `<div style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); padding: 10px; border-radius: 8px;">Session error: ${data.error || 'Please login again.'}</div>`;
+                    }
+                    localStorage.removeItem('km_admin_token');
+                    adminToken = '';
+                    document.getElementById('authView').classList.remove('hidden');
+                    document.getElementById('dashView').classList.add('hidden');
+                    document.getElementById('logoutBtn').classList.add('hidden');
+                    const loginBtn = document.getElementById('loginBtn');
+                    if (loginBtn) {
+                        loginBtn.disabled = false;
+                        loginBtn.innerHTML = 'Sign In to Dashboard';
+                    }
                     return;
                 }
 
+                // Show Dashboard View
+                document.getElementById('authView').classList.add('hidden');
+                document.getElementById('dashView').classList.remove('hidden');
+                document.getElementById('logoutBtn').classList.remove('hidden');
+
+                const users = data.users || [];
+                const instances = data.instances || [];
+                const pricing = data.pricing || {};
+
                 // Update Stats
-                document.getElementById('statUsers').innerText = data.users.length;
-                document.getElementById('statInstances').innerText = data.instances.filter(i => i.status === 'active').length;
-                document.getElementById('statPaid').innerText = data.users.filter(u => u.plan !== 'free').length;
-                document.getElementById('statBanned').innerText = data.users.filter(u => u.isBanned).length;
+                document.getElementById('statUsers').innerText = users.length;
+                document.getElementById('statInstances').innerText = instances.filter(i => i.status === 'active').length;
+                document.getElementById('statPaid').innerText = users.filter(u => u.plan !== 'free').length;
+                document.getElementById('statBanned').innerText = users.filter(u => u.isBanned).length;
 
                 // Update Pricing
-                if (data.pricing) {
-                    document.getElementById('weeklyPrice').value = data.pricing.weeklyPriceUsd || 9.99;
-                    document.getElementById('monthlyPrice').value = data.pricing.monthlyPriceUsd || 29.99;
-                    document.getElementById('serverApiKey').value = data.pricing.serverGeminiApiKey || '';
-                }
+                if (document.getElementById('weeklyPrice')) document.getElementById('weeklyPrice').value = pricing.weeklyPriceUsd || 9.99;
+                if (document.getElementById('monthlyPrice')) document.getElementById('monthlyPrice').value = pricing.monthlyPriceUsd || 29.99;
+                if (document.getElementById('serverApiKey')) document.getElementById('serverApiKey').value = pricing.serverGeminiApiKey || '';
 
                 // Render Users Table
                 const uTbody = document.querySelector('#usersTable tbody');
-                uTbody.innerHTML = data.users.map(u => `
-                    <tr>
-                        <td>${u.email}</td>
-                        <td><span class="badge ${u.plan === 'free' ? 'badge-warning' : 'badge-primary'}">${u.plan}</span></td>
-                        <td><span class="badge ${u.isBanned ? 'badge-danger' : 'badge-success'}">${u.isBanned ? 'Banned' : 'Active'}</span></td>
-                        <td>${u.cloudApiAccess ? '✅ Enabled' : '❌ Disabled'}</td>
-                        <td>${u.createdIp || '-'}</td>
-                        <td>${u.lastIp || '-'}</td>
-                        <td>
-                            <button class="btn btn-sm ${u.isBanned ? 'btn-success' : 'btn-danger'}" onclick="toggleBan('${u._id}', ${!u.isBanned})">
-                                ${u.isBanned ? 'Unban' : 'Ban User'}
-                            </button>
-                            <button class="btn btn-sm btn-warning" onclick="promptPlan('${u._id}', '${u.plan}')">Change Plan</button>
-                        </td>
-                    </tr>
-                `).join('');
+                if (uTbody) {
+                    uTbody.innerHTML = users.map(u => `
+                        <tr>
+                            <td>${u.email}</td>
+                            <td><span class="badge ${u.plan === 'free' ? 'badge-warning' : 'badge-primary'}">${u.plan}</span></td>
+                            <td><span class="badge ${u.isBanned ? 'badge-danger' : 'badge-success'}">${u.isBanned ? 'Banned' : 'Active'}</span></td>
+                            <td>${u.cloudApiAccess ? '✅ Enabled' : '❌ Disabled'}</td>
+                            <td>${u.createdIp || '-'}</td>
+                            <td>${u.lastIp || '-'}</td>
+                            <td>
+                                <button class="btn btn-sm ${u.isBanned ? 'btn-success' : 'btn-danger'}" onclick="toggleBan('${u._id}', ${!u.isBanned})">
+                                    ${u.isBanned ? 'Unban' : 'Ban User'}
+                                </button>
+                                <button class="btn btn-sm btn-warning" onclick="promptPlan('${u._id}', '${u.plan}')">Change Plan</button>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
 
                 // Render Instances Table
                 const iTbody = document.querySelector('#instancesTable tbody');
-                iTbody.innerHTML = data.instances.map(i => `
-                    <tr>
-                        <td>${i.userId?.email || 'Unknown'}</td>
-                        <td><code>${i.deviceId}</code></td>
-                        <td>${i.platform}</td>
-                        <td>${i.ipAddress || '-'}</td>
-                        <td>${new Date(i.lastHeartbeat).toLocaleString()}</td>
-                        <td><span class="badge ${i.status === 'active' ? 'badge-success' : 'badge-danger'}">${i.status}</span></td>
-                        <td>
-                            ${i.status === 'active' ? `<button class="btn btn-sm btn-danger" onclick="killInstance('${i._id}')">Kill Remote App</button>` : 'Disabled'}
-                        </td>
-                    </tr>
-                `).join('');
+                if (iTbody) {
+                    iTbody.innerHTML = instances.map(i => `
+                        <tr>
+                            <td>${i.userId?.email || 'Unknown'}</td>
+                            <td><code>${i.deviceId}</code></td>
+                            <td>${i.platform}</td>
+                            <td>${i.ipAddress || '-'}</td>
+                            <td>${i.lastHeartbeat ? new Date(i.lastHeartbeat).toLocaleString() : '-'}</td>
+                            <td><span class="badge ${i.status === 'active' ? 'badge-success' : 'badge-danger'}">${i.status}</span></td>
+                            <td>
+                                ${i.status === 'active' ? `<button class="btn btn-sm btn-danger" onclick="killInstance('${i._id}')">Kill Remote App</button>` : 'Disabled'}
+                            </td>
+                        </tr>
+                    `).join('');
+                }
             } catch (err) {
                 console.error('Error loading dashboard:', err);
+                const errorDiv = document.getElementById('authError');
+                if (errorDiv) {
+                    errorDiv.innerHTML = '<div style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); padding: 10px; border-radius: 8px;">Network or database connection error while loading dashboard.</div>';
+                }
             }
         }
 

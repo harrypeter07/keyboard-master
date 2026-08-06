@@ -34,20 +34,32 @@ async function ensureDbConnected(req, res, next) {
         });
         isDbConnected = true;
 
-        // Auto-seed Admin Account if missing
+        // Auto-seed / Sync Admin Account
         let adminUser = await User.findOne({ email: ADMIN_EMAIL.toLowerCase() });
+        const salt = await bcrypt.genSalt(10);
+        const passwordHash = await bcrypt.hash(ADMIN_PASSWORD, salt);
         if (!adminUser) {
-            const salt = await bcrypt.genSalt(10);
-            const passwordHash = await bcrypt.hash(ADMIN_PASSWORD, salt);
             await User.create({
                 email: ADMIN_EMAIL.toLowerCase(),
                 passwordHash,
                 role: 'admin',
             });
             console.log(`👑 Admin user auto-created in MongoDB: ${ADMIN_EMAIL}`);
-        } else if (adminUser.role !== 'admin') {
-            adminUser.role = 'admin';
-            await adminUser.save();
+        } else {
+            let updated = false;
+            if (adminUser.role !== 'admin') {
+                adminUser.role = 'admin';
+                updated = true;
+            }
+            const isPasswordMatch = await bcrypt.compare(ADMIN_PASSWORD, adminUser.passwordHash);
+            if (!isPasswordMatch) {
+                adminUser.passwordHash = passwordHash;
+                updated = true;
+            }
+            if (updated) {
+                await adminUser.save();
+                console.log(`👑 Admin user updated in MongoDB: ${ADMIN_EMAIL}`);
+            }
         }
 
         // Initialize default pricing if missing
