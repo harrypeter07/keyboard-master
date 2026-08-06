@@ -12,7 +12,8 @@ const bcrypt = require('bcryptjs');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/keyboard_master';
+const ATLAS_URI = 'mongodb+srv://hassanmansuri570_db_user:8CWWFYdtoVi3UhuK@cluster0.2gpa5kk.mongodb.net/keyboard_master?retryWrites=true&w=majority&appName=Cluster0';
+const MONGO_URI = process.env.MONGO_URI || ATLAS_URI;
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@keyboardmaster.com';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'AdminPassword2026!';
 
@@ -30,7 +31,7 @@ async function ensureDbConnected(req, res, next) {
     }
     try {
         await mongoose.connect(MONGO_URI, {
-            serverSelectionTimeoutMS: 5000,
+            serverSelectionTimeoutMS: 8000,
         });
         isDbConnected = true;
 
@@ -65,15 +66,14 @@ async function ensureDbConnected(req, res, next) {
         // Initialize default pricing if missing
         const pricing = await Pricing.findOne();
         if (!pricing) {
-            await Pricing.create({
-                weeklyPriceUsd: 9.99,
-                monthlyPriceUsd: 29.99,
-            });
+            await Pricing.create({});
         }
+
+        return next();
     } catch (err) {
         console.error('❌ MongoDB Connection Error:', err.message);
+        return res.status(500).json({ success: false, error: `Database Connection Failed: ${err.message}` });
     }
-    next();
 }
 
 app.use(ensureDbConnected);
