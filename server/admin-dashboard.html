@@ -297,6 +297,10 @@
                         <label>Server Cloud Gemini API Key (For Paid Members)</label>
                         <input type="password" id="serverApiKey" class="form-control" placeholder="AQ.Ab8RN6...">
                     </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label>Live Installer Download URL (Google Drive / AWS S3 / Direct EXE Link)</label>
+                        <input type="text" id="downloadUrl" class="form-control" placeholder="https://drive.google.com/uc?export=download&id=YOUR_FILE_ID">
+                    </div>
                 </div>
                 <button class="btn btn-primary" style="width: auto; margin-top: 1rem;" onclick="savePricing()">Save Settings</button>
             </div>
@@ -459,6 +463,7 @@
                 if (document.getElementById('weeklyPrice')) document.getElementById('weeklyPrice').value = pricing.weeklyPriceUsd || 9.99;
                 if (document.getElementById('monthlyPrice')) document.getElementById('monthlyPrice').value = pricing.monthlyPriceUsd || 29.99;
                 if (document.getElementById('serverApiKey')) document.getElementById('serverApiKey').value = pricing.serverGeminiApiKey || '';
+                if (document.getElementById('downloadUrl')) document.getElementById('downloadUrl').value = pricing.downloadUrl || '';
 
                 // Render Users Table
                 const uTbody = document.querySelector('#usersTable tbody');
@@ -546,11 +551,12 @@
             const weeklyPriceUsd = parseFloat(document.getElementById('weeklyPrice').value);
             const monthlyPriceUsd = parseFloat(document.getElementById('monthlyPrice').value);
             const serverGeminiApiKey = document.getElementById('serverApiKey').value;
+            const downloadUrl = document.getElementById('downloadUrl').value;
 
             await fetch('/api/admin/pricing', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
-                body: JSON.stringify({ weeklyPriceUsd, monthlyPriceUsd, serverGeminiApiKey })
+                body: JSON.stringify({ weeklyPriceUsd, monthlyPriceUsd, serverGeminiApiKey, downloadUrl })
             });
             alert('Settings updated successfully!');
             loadDashboard();

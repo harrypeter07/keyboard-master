@@ -88,10 +88,18 @@ app.get('/km_app_preview.jpg', (req, res) => {
     res.sendFile(path.join(__dirname, 'km_app_preview.jpg'));
 });
 
-// Dynamic Download Redirect Route (Hides GitHub / Cloud Provider)
-app.get('/download-installer', (req, res) => {
-    const downloadUrl = process.env.DOWNLOAD_URL || 'https://drive.google.com';
-    res.redirect(downloadUrl);
+// Dynamic Download Redirect Route (Hides Google Drive / AWS S3 / Cloud Provider)
+app.get('/download-installer', async (req, res) => {
+    try {
+        const pricing = await Pricing.findOne();
+        const targetUrl = (pricing && pricing.downloadUrl && pricing.downloadUrl.trim()) 
+            ? pricing.downloadUrl.trim() 
+            : (process.env.DOWNLOAD_URL || 'https://drive.google.com');
+        res.redirect(targetUrl);
+    } catch (err) {
+        const fallbackUrl = process.env.DOWNLOAD_URL || 'https://drive.google.com';
+        res.redirect(fallbackUrl);
+    }
 });
 
 // Static Admin Dashboard Page
