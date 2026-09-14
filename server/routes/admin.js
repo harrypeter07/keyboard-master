@@ -118,10 +118,10 @@ router.post('/kill-instance', adminAuth, async (req, res) => {
     }
 });
 
-// Update Plan Pricing, Server Gemini API Key & Direct Installer Download URL
+// Update Plan Pricing, Server Gemini API Key, Installer URL & Version
 router.post('/pricing', adminAuth, async (req, res) => {
     try {
-        const { weeklyPriceUsd, monthlyPriceUsd, serverGeminiApiKey, downloadUrl } = req.body;
+        const { weeklyPriceUsd, monthlyPriceUsd, serverGeminiApiKey, downloadUrl, latestVersion } = req.body;
         let pricing = await Pricing.findOne();
         if (!pricing) {
             pricing = new Pricing();
@@ -131,6 +131,7 @@ router.post('/pricing', adminAuth, async (req, res) => {
         if (typeof monthlyPriceUsd === 'number') pricing.monthlyPriceUsd = monthlyPriceUsd;
         if (typeof serverGeminiApiKey === 'string') pricing.serverGeminiApiKey = serverGeminiApiKey;
         if (typeof downloadUrl === 'string') pricing.downloadUrl = downloadUrl.trim();
+        if (typeof latestVersion === 'string' && latestVersion.trim()) pricing.latestVersion = latestVersion.trim();
 
         await pricing.save();
         return res.json({ success: true, message: 'Pricing and server settings updated successfully.' });

@@ -17,6 +17,10 @@ const PricingSchema = new mongoose.Schema({
         type: String,
         default: '',
     },
+    latestVersion: {
+        type: String,
+        default: '0.8.0',
+    },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Pricing', PricingSchema);

@@ -119,6 +119,18 @@ app.get('/admin', (req, res) => {
     res.sendFile(path.join(__dirname, 'admin-dashboard.html'));
 });
 
+// App Version & In-App Auto-Update Check Endpoint
+app.get(['/api/version', '/api/health'], async (req, res) => {
+    try {
+        const pricing = await Pricing.findOne();
+        const version = (pricing && pricing.latestVersion && pricing.latestVersion.trim()) ? pricing.latestVersion.trim() : '0.8.0';
+        const downloadUrl = (pricing && pricing.downloadUrl && pricing.downloadUrl.trim()) ? pricing.downloadUrl.trim() : (process.env.DOWNLOAD_URL || 'https://drive.google.com');
+        res.json({ success: true, status: 'ok', version, latestVersion: version, downloadUrl });
+    } catch (err) {
+        res.json({ success: true, status: 'ok', version: '0.8.0', latestVersion: '0.8.0', downloadUrl: process.env.DOWNLOAD_URL || '' });
+    }
+});
+
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);

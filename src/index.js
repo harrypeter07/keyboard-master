@@ -30,6 +30,16 @@ app.whenReady().then(async () => {
     setupGeminiIpcHandlers(geminiSessionRef);
     setupStorageIpcHandlers();
     setupGeneralIpcHandlers();
+
+    try {
+        const { checkAppUpdates, setupAutoUpdaterIpcHandlers } = require('./utils/auto-updater');
+        setupAutoUpdaterIpcHandlers();
+        setTimeout(() => {
+            checkAppUpdates();
+        }, 3000);
+    } catch (err) {
+        console.warn('AutoUpdater initialization warning:', err.message);
+    }
 });
 
 app.on('window-all-closed', () => {

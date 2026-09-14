@@ -322,6 +322,10 @@
                         <label>Live Installer Download URL (Google Drive / AWS S3 / Direct EXE Link)</label>
                         <input type="text" id="downloadUrl" class="form-control" placeholder="https://drive.google.com/uc?export=download&id=YOUR_FILE_ID">
                     </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label>Latest Released App Version (Bumps In-App Auto-Updater e.g. 0.8.0)</label>
+                        <input type="text" id="latestVersion" class="form-control" placeholder="0.8.0">
+                    </div>
                 </div>
                 <button class="btn btn-primary" style="width: auto; margin-top: 1rem;" onclick="savePricing()">Save Settings</button>
             </div>
@@ -485,6 +489,7 @@
                 if (document.getElementById('monthlyPrice')) document.getElementById('monthlyPrice').value = pricing.monthlyPriceUsd || 29.99;
                 if (document.getElementById('serverApiKey')) document.getElementById('serverApiKey').value = pricing.serverGeminiApiKey || '';
                 if (document.getElementById('downloadUrl')) document.getElementById('downloadUrl').value = pricing.downloadUrl || '';
+                if (document.getElementById('latestVersion')) document.getElementById('latestVersion').value = pricing.latestVersion || '0.8.0';
 
                 // Render Users Table
                 const uTbody = document.querySelector('#usersTable tbody');
@@ -573,11 +578,12 @@
             const monthlyPriceUsd = parseFloat(document.getElementById('monthlyPrice').value);
             const serverGeminiApiKey = document.getElementById('serverApiKey').value;
             const downloadUrl = document.getElementById('downloadUrl').value;
+            const latestVersion = document.getElementById('latestVersion').value;
 
             await fetch('/api/admin/pricing', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
-                body: JSON.stringify({ weeklyPriceUsd, monthlyPriceUsd, serverGeminiApiKey, downloadUrl })
+                body: JSON.stringify({ weeklyPriceUsd, monthlyPriceUsd, serverGeminiApiKey, downloadUrl, latestVersion })
             });
             alert('Settings updated successfully!');
             loadDashboard();

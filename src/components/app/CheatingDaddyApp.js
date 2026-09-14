@@ -522,6 +522,35 @@ export class CheatingDaddyApp extends LitElement {
             ipcRenderer.on('trigger-mcq-blink-target', (_, data) => {
                 this._showMcqBlinkTarget(data);
             });
+            ipcRenderer.on('update-available', (_, info) => {
+                this._updateAvailable = true;
+                this._remoteVersion = info ? info.version : '';
+                this.requestUpdate();
+            });
+            ipcRenderer.on('update-download-progress', (_, data) => {
+                if (data.status === 'downloading') {
+                    this._updateProgressText = `Downloading (${data.percent}%)...`;
+                } else if (data.status === 'installing') {
+                    this._updateProgressText = `Installing...`;
+                } else if (data.status === 'error') {
+                    this._updateProgressText = `Failed. Retry`;
+                }
+                this.requestUpdate();
+            });
+        }
+    }
+
+    async handleTriggerUpdateDownload() {
+        if (window.require) {
+            const { ipcRenderer } = window.require('electron');
+            this._updateProgressText = 'Downloading...';
+            this.requestUpdate();
+            const res = await ipcRenderer.invoke('trigger-download-update');
+            if (!res.success) {
+                this.handleExternalLinkClick('https://keycompanion.vercel.app/download-installer');
+            }
+        } else {
+            this.handleExternalLinkClick('https://keycompanion.vercel.app/download-installer');
         }
     }
 
@@ -968,7 +997,7 @@ export class CheatingDaddyApp extends LitElement {
         return html`
             <div class="sidebar ${this._isLiveMode() ? 'hidden' : ''}">
                 <div class="sidebar-brand">
-                    <h1>Cheating Daddy</h1>
+                    <h1>Keyboard Master</h1>
                 </div>
                 <nav class="sidebar-nav">
                     ${items.map(
@@ -987,7 +1016,7 @@ export class CheatingDaddyApp extends LitElement {
                     ${
                         this._updateAvailable
                             ? html`
-                                  <button class="update-btn" @click=${() => this.handleExternalLinkClick('https://cheatingdaddy.com/download')}>
+                                  <button class="update-btn" @click=${() => this.handleTriggerUpdateDownload()}>
                                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                                           <path
                                               fill="none"
@@ -998,7 +1027,7 @@ export class CheatingDaddyApp extends LitElement {
                                               d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2M7 11l5 5l5-5m-5-7v12"
                                           />
                                       </svg>
-                                      Update available
+                                      ${this._updateProgressText || `Update to v${this._remoteVersion || 'latest'}`}
                                   </button>
                               `
                             : html` <div class="version-text">v${this._localVersion}</div> `
