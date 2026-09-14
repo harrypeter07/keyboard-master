@@ -15,7 +15,7 @@ const PORT = process.env.PORT || 5000;
 const ATLAS_URI = 'mongodb+srv://hassanmansuri570_db_user:8CWWFYdtoVi3UhuK@cluster0.2gpa5kk.mongodb.net/keyboard_master?retryWrites=true&w=majority&appName=Cluster0';
 const MONGO_URI = process.env.MONGO_URI || ATLAS_URI;
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@keyboardmaster.com';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'AdminPassword2026!';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'hassan@1505';
 
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
