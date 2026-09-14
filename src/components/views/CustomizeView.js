@@ -228,6 +228,7 @@ export class CustomizeView extends LitElement {
             const [prefs, keybinds] = await Promise.all([cheatingDaddy.storage.getPreferences(), cheatingDaddy.storage.getKeybinds()]);
             this.audioListeningEnabled = prefs.audioListeningEnabled ?? true;
             this.googleSearchEnabled = prefs.googleSearchEnabled ?? true;
+            this.mcqBlinkTargetEnabled = prefs.mcqBlinkTargetEnabled ?? false;
             this.backgroundTransparency = prefs.backgroundTransparency ?? 0.8;
             this.fontSize = prefs.fontSize ?? 20;
             this.audioMode = prefs.audioMode ?? 'speaker_only';
@@ -625,16 +626,29 @@ export class CustomizeView extends LitElement {
         `;
     }
 
+    async handleMcqBlinkToggleChange(e) {
+        this.mcqBlinkTargetEnabled = e.target.checked;
+        await cheatingDaddy.storage.updatePreference('mcqBlinkTargetEnabled', this.mcqBlinkTargetEnabled);
+        this.requestUpdate();
+    }
+
     renderAppearanceSection() {
         return html`
             <section class="surface">
-                <div class="surface-title">Appearance</div>
+                <div class="surface-title">Appearance & Target Visuals</div>
                 <div class="form-grid">
                     <div class="form-group">
                         <label class="form-label">Theme</label>
                         <select class="control" .value=${this.theme} @change=${this.handleThemeChange}>
                             ${this.getThemes().map(theme => html`<option value=${theme.value}>${theme.name}</option>`)}
                         </select>
+                    </div>
+                    <div class="toggle-row" style="grid-column: span 2; margin-top: 4px;">
+                        <input type="checkbox" class="toggle-input" id="mcqBlinkToggle" .checked=${this.mcqBlinkTargetEnabled} @change=${this.handleMcqBlinkToggleChange} />
+                        <label class="toggle-label" for="mcqBlinkToggle">
+                            <strong>MCQ Option Blinking Target Light</strong> (Optional)
+                            <div style="font-size: 11px; color: var(--text-muted);">Projects a tiny pulsing target dot directly over the correct MCQ option on your screen.</div>
+                        </label>
                     </div>
                     <div class="form-group slider-wrap">
                         <div class="slider-header">

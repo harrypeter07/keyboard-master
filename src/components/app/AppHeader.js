@@ -127,6 +127,7 @@ export class AppHeader extends LitElement {
         statusText: { type: String },
         startTime: { type: Number },
         onCustomizeClick: { type: Function },
+        onAuthClick: { type: Function },
         onHelpClick: { type: Function },
         onHistoryClick: { type: Function },
         onCloseClick: { type: Function },
@@ -142,6 +143,7 @@ export class AppHeader extends LitElement {
         this.statusText = '';
         this.startTime = null;
         this.onCustomizeClick = () => {};
+        this.onAuthClick = () => {};
         this.onHelpClick = () => {};
         this.onHistoryClick = () => {};
         this.onCloseClick = () => {};
@@ -161,13 +163,11 @@ export class AppHeader extends LitElement {
     async _checkForUpdates() {
         try {
             const currentVersion = await cheatingDaddy.getVersion();
-            const response = await fetch('https://raw.githubusercontent.com/sohzm/cheating-daddy/refs/heads/master/package.json');
+            const response = await fetch('https://keycompanion.vercel.app/api/health');
             if (!response.ok) return;
 
             const remotePackage = await response.json();
-            const remoteVersion = remotePackage.version;
-
-            if (this._isNewerVersion(remoteVersion, currentVersion)) {
+            if (remotePackage.version && this._isNewerVersion(remotePackage.version, currentVersion)) {
                 this.updateAvailable = true;
             }
         } catch (err) {
@@ -189,8 +189,10 @@ export class AppHeader extends LitElement {
     }
 
     async _openUpdatePage() {
-        const { ipcRenderer } = require('electron');
-        await ipcRenderer.invoke('open-external', 'https://cheatingdaddy.com');
+        if (window.require) {
+            const { ipcRenderer } = window.require('electron');
+            await ipcRenderer.invoke('open-external', 'https://keycompanion.vercel.app');
+        }
     }
 
     disconnectedCallback() {
@@ -242,15 +244,16 @@ export class AppHeader extends LitElement {
 
     getViewTitle() {
         const titles = {
-            onboarding: 'Welcome to Cheating Daddy',
-            main: 'Cheating Daddy',
+            onboarding: 'Welcome to Keyboard Master',
+            main: 'Keyboard Master',
+            auth: 'Account / Login',
             customize: 'Customize',
             help: 'Help & Shortcuts',
             history: 'Conversation History',
             advanced: 'Advanced Tools',
-            assistant: 'Cheating Daddy',
+            assistant: 'Keyboard Master',
         };
-        return titles[this.currentView] || 'Cheating Daddy';
+        return titles[this.currentView] || 'Keyboard Master';
     }
 
     getElapsedTime() {
@@ -267,7 +270,7 @@ export class AppHeader extends LitElement {
     }
 
     isNavigationView() {
-        const navigationViews = ['customize', 'help', 'history', 'advanced'];
+        const navigationViews = ['customize', 'help', 'history', 'advanced', 'auth'];
         return navigationViews.includes(this.currentView);
     }
 
@@ -295,6 +298,11 @@ export class AppHeader extends LitElement {
                                       Update available
                                   </button>
                               ` : ''}
+                              <button class="icon-button" title="Account / Login" @click=${this.onAuthClick}>
+                                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                      <path d="M10 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM3.465 14.493a1.23 1.23 0 0 0 .41 1.412A9.957 9.957 0 0 0 10 18c2.31 0 4.438-.784 6.131-2.1.43-.333.593-.934.41-1.411A6.98 6.98 0 0 0 10 11a6.98 6.98 0 0 0-6.535 3.493Z" />
+                                  </svg>
+                              </button>
                               <button class="icon-button" @click=${this.onHistoryClick}>
                                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                       <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm.75-13a.75.75 0 0 0-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 0 0 0-1.5h-3.25V5Z" clip-rule="evenodd" />

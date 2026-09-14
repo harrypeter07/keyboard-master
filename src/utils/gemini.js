@@ -1074,6 +1074,22 @@ async function sendImageToGeminiHttp(base64Data, prompt) {
                 // Save current working active key index so subsequent calls don't retry exhausted keys!
                 setActiveKeyIndex(keyIdx);
 
+                // Check if MCQ Blinking Target Light option is enabled
+                try {
+                    const prefs = getPreferences();
+                    if (prefs && prefs.mcqBlinkTargetEnabled && fullText) {
+                        const match = fullText.match(/(?:Option|Answer|Choice)\s*[:\-]?\s*([A-D])\b/i) || fullText.match(/\b([A-D])[\.\)]\s/i);
+                        if (match) {
+                            const opt = match[1].toUpperCase();
+                            const optPercentMap = { 'A': 36, 'B': 50, 'C': 64, 'D': 78 };
+                            const percentY = optPercentMap[opt] || 50;
+                            sendToRenderer('trigger-mcq-blink-target', { option: opt, percentY });
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Error checking MCQ target light:', e.message);
+                }
+
                 // Turn off loader card
                 sendToRenderer('screen-analysis-loading', false);
                 sendToRenderer('update-status', `Analysis ready (${modelCandidate})`);

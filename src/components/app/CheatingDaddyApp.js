@@ -7,6 +7,7 @@ import { AssistantView } from '../views/AssistantView.js';
 import { OnboardingView } from '../views/OnboardingView.js';
 import { AICustomizeView } from '../views/AICustomizeView.js';
 import { FeedbackView } from '../views/FeedbackView.js';
+import { AuthView } from '../views/AuthView.js';
 
 export class CheatingDaddyApp extends LitElement {
     static styles = css`
@@ -232,6 +233,33 @@ export class CheatingDaddyApp extends LitElement {
             width: 20px;
             height: 20px;
             flex-shrink: 0;
+        }
+
+        /* ── MCQ Blinking Target Pulse Dot Overlay ── */
+        .mcq-target-dot {
+            position: fixed;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #00f2fe;
+            box-shadow: 0 0 12px #00f2fe, 0 0 25px #e100ff, 0 0 40px #00f2fe;
+            border: 2px solid #ffffff;
+            z-index: 99999;
+            pointer-events: none;
+            animation: mcq-pulse 0.7s ease-in-out infinite alternate;
+        }
+
+        @keyframes mcq-pulse {
+            0% {
+                transform: scale(0.9);
+                opacity: 0.7;
+                box-shadow: 0 0 10px #00f2fe, 0 0 20px #e100ff;
+            }
+            100% {
+                transform: scale(1.6);
+                opacity: 1;
+                box-shadow: 0 0 30px #00f2fe, 0 0 50px #e100ff, 0 0 70px #00f2fe;
+            }
         }
 
         .version-text {
@@ -491,7 +519,26 @@ export class CheatingDaddyApp extends LitElement {
             ipcRenderer.on('screen-analysis-loading', (_, isLoading) => {
                 this.setScreenAnalysisLoading(isLoading);
             });
+            ipcRenderer.on('trigger-mcq-blink-target', (_, data) => {
+                this._showMcqBlinkTarget(data);
+            });
         }
+    }
+
+    _showMcqBlinkTarget(data) {
+        const { option, percentY } = data || {};
+        this.mcqBlinkTarget = {
+            option: option || 'A',
+            top: percentY || 50,
+            left: 28,
+        };
+        this.requestUpdate();
+
+        clearTimeout(this._mcqBlinkTimeout);
+        this._mcqBlinkTimeout = setTimeout(() => {
+            this.mcqBlinkTarget = null;
+            this.requestUpdate();
+        }, 4500);
     }
 
     disconnectedCallback() {
@@ -805,6 +852,9 @@ export class CheatingDaddyApp extends LitElement {
             case 'feedback':
                 return html`<feedback-view></feedback-view>`;
 
+            case 'auth':
+                return html`<auth-view></auth-view>`;
+
             case 'help':
                 return html`<help-view .onExternalLinkClick=${url => this.handleExternalLinkClick(url)}></help-view>`;
 
@@ -872,6 +922,13 @@ export class CheatingDaddyApp extends LitElement {
                         />
                         <path d="M12 8v4l3 3" />
                     </g>
+                </svg>`,
+            },
+            {
+                id: 'auth',
+                label: 'Account / Login',
+                icon: html`<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
                 </svg>`,
             },
             {
@@ -1011,6 +1068,13 @@ export class CheatingDaddyApp extends LitElement {
                     <div class="content-inner ${isLive ? 'live' : ''}">${this.renderCurrentView()}</div>
                 </div>
             </div>
+            ${this.mcqBlinkTarget ? html`
+                <div
+                    class="mcq-target-dot"
+                    style="top: ${this.mcqBlinkTarget.top}%; left: ${this.mcqBlinkTarget.left}%;"
+                    title="MCQ Option ${this.mcqBlinkTarget.option}"
+                ></div>
+            ` : ''}
         `;
     }
 }
