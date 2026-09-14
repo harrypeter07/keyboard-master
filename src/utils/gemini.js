@@ -417,6 +417,10 @@ async function sendToGroq(transcription) {
             error: error.message,
             stack: error.stack,
         });
+        sendToRenderer('update-status', 'Groq error: ' + error.message);
+    }
+}
+
 function extractAndEmitMcqTargets(fullText) {
     try {
         const prefs = getPreferences();
