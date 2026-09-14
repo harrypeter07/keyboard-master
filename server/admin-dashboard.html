@@ -250,7 +250,8 @@
         .badge-primary { background: rgba(190, 24, 93, 0.12); color: var(--dark-pink); }
 
         .hidden { display: none !important; }
-    </style>
+    <!-- Google Identity Services SDK -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
 
@@ -275,6 +276,29 @@
                 <input type="password" id="adminPassword" class="form-control" placeholder="••••••••">
             </div>
             <button id="loginBtn" class="btn btn-primary" onclick="loginAdmin()">Sign In to Dashboard</button>
+
+            <!-- Google OAuth SSO Option -->
+            <div style="display: flex; align-items: center; gap: 10px; margin: 1.2rem 0; color: var(--muted); font-size: 0.8rem;">
+                <div style="flex: 1; height: 1px; background: var(--border);"></div>
+                <span>OR</span>
+                <div style="flex: 1; height: 1px; background: var(--border);"></div>
+            </div>
+
+            <div id="g_id_onload"
+                 data-client_id="YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com"
+                 data-callback="handleGoogleAdminCallback"
+                 data-auto_prompt="false">
+            </div>
+            <div class="g_id_signin"
+                 data-type="standard"
+                 data-size="large"
+                 data-theme="outline"
+                 data-text="sign_in_with"
+                 data-shape="pill"
+                 data-logo_alignment="left"
+                 style="width: 100%; display: flex; justify-content: center;">
+            </div>
+
             <div id="authError" style="color: var(--danger); font-size: 0.85rem; margin-top: 1rem; text-align: center;"></div>
         </div>
 
@@ -436,6 +460,31 @@
                     loginBtn.disabled = false;
                     loginBtn.innerHTML = 'Sign In to Dashboard';
                 }
+            }
+        }
+
+        async function handleGoogleAdminCallback(response) {
+            const errorDiv = document.getElementById('authError');
+            errorDiv.innerHTML = '<div style="color: var(--dark-pink); text-align: center;">⚡ Verifying Google OAuth Token...</div>';
+
+            try {
+                const res = await fetch('/api/auth/google', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ credential: response.credential })
+                });
+                const data = await res.json();
+                if (data.success && data.user.role === 'admin') {
+                    adminToken = data.token;
+                    localStorage.setItem('km_admin_token', adminToken);
+                    await loadDashboard();
+                } else if (data.success) {
+                    errorDiv.innerHTML = '<div style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); padding: 10px; border-radius: 8px;">Google authentication successful, but this Google account is not configured with administrator privileges.</div>';
+                } else {
+                    errorDiv.innerHTML = `<div style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); padding: 10px; border-radius: 8px;">${data.error || 'Google login failed.'}</div>`;
+                }
+            } catch (err) {
+                errorDiv.innerHTML = '<div style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); padding: 10px; border-radius: 8px;">Network error during Google authentication.</div>';
             }
         }
 

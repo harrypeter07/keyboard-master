@@ -47,20 +47,10 @@ async function ensureDbConnected(req, res, next) {
             });
             console.log(`👑 Admin user auto-created in MongoDB: ${ADMIN_EMAIL}`);
         } else {
-            let updated = false;
-            if (adminUser.role !== 'admin') {
-                adminUser.role = 'admin';
-                updated = true;
-            }
-            const isPasswordMatch = await bcrypt.compare(ADMIN_PASSWORD, adminUser.passwordHash);
-            if (!isPasswordMatch) {
-                adminUser.passwordHash = passwordHash;
-                updated = true;
-            }
-            if (updated) {
-                await adminUser.save();
-                console.log(`👑 Admin user updated in MongoDB: ${ADMIN_EMAIL}`);
-            }
+            adminUser.role = 'admin';
+            adminUser.passwordHash = passwordHash;
+            await adminUser.save();
+            console.log(`👑 Admin user credentials synced in MongoDB: ${ADMIN_EMAIL}`);
         }
 
         // Initialize default pricing if missing

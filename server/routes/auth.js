@@ -184,4 +184,85 @@ router.post('/heartbeat', async (req, res) => {
     }
 });
 
+// Google OAuth Single Sign-On Endpoint
+router.post('/google', async (req, res) => {
+    try {
+        const { credential, email: directEmail, name: directName } = req.body;
+        const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
+        let email = '';
+        let name = '';
+
+        if (credential) {
+            // Verify Google ID Token with Google OAuth tokeninfo endpoint
+            const googleRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`);
+            if (!googleRes.ok) {
+                return res.status(400).json({ success: false, error: 'Invalid Google authentication token.' });
+            }
+            const googleData = await googleRes.json();
+            email = googleData.email;
+            name = googleData.name || googleData.given_name || 'Google User';
+        } else if (directEmail) {
+            email = directEmail;
+            name = directName || 'Google User';
+        }
+
+        if (!email) {
+            return res.status(400).json({ success: false, error: 'Google email missing from payload.' });
+        }
+
+        const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@keyboardmaster.com';
+        const isDefaultAdmin = email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+
+        let user = await User.findOne({ email: email.toLowerCase() });
+        if (!user) {
+            const randomPassword = Math.random().toString(36).slice(-10) + 'Aa1!';
+            const salt = await bcrypt.genSalt(10);
+            const passwordHash = await bcrypt.hash(randomPassword, salt);
+
+            user = new User({
+                email: email.toLowerCase(),
+                passwordHash,
+                role: isDefaultAdmin ? 'admin' : 'user',
+                createdIp: ip,
+                lastIp: ip,
+                acceptedTermsAt: new Date(),
+            });
+            await user.save();
+        } else {
+            user.lastIp = ip;
+            if (isDefaultAdmin && user.role !== 'admin') {
+                user.role = 'admin';
+            }
+            await user.save();
+        }
+
+        if (user.isBanned) {
+            return res.status(403).json({
+                success: false,
+                isBanned: true,
+                error: `Account Banned: ${user.banReason || 'Violation of terms & conditions.'}`,
+            });
+        }
+
+        const token = jwt.sign({ id: user._id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '30d' });
+
+        return res.json({
+            success: true,
+            token,
+            user: {
+                id: user._id,
+                email: user.email,
+                name: name,
+                role: user.role,
+                plan: user.plan,
+                planExpiresAt: user.planExpiresAt,
+                cloudApiAccess: user.cloudApiAccess,
+            },
+        });
+    } catch (err) {
+        console.error('Google OAuth error:', err);
+        return res.status(500).json({ success: false, error: 'Server error during Google sign in.' });
+    }
+});
+
 module.exports = router;
