@@ -3,51 +3,57 @@ import { html, css, LitElement } from '../../assets/lit-core-2.7.4.min.js';
 export class TermsModal extends LitElement {
     static styles = css`
         :host {
+            display: none;
+        }
+
+        :host([is-open]),
+        :host([isOpen]) {
+            display: flex;
             position: fixed;
             inset: 0;
             z-index: 9999;
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(12px);
-            display: flex;
+            background: rgba(20, 10, 25, 0.55);
+            backdrop-filter: blur(8px);
             align-items: center;
             justify-content: center;
             padding: 20px;
         }
 
         .modal-card {
-            background: var(--bg-surface, #111827);
-            border: 1px solid var(--border, rgba(255,255,255,0.1));
+            background: var(--bg-surface, #FFFDF9);
+            border: 1px solid var(--border, #E8D9CE);
             border-radius: var(--radius-lg, 16px);
             width: 100%;
             max-width: 600px;
             max-height: 80vh;
             display: flex;
             flex-direction: column;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+            box-shadow: 0 25px 50px -12px rgba(43, 22, 37, 0.25);
             overflow: hidden;
-            color: var(--text-primary, #f9fafb);
+            color: var(--text-primary, #2B1625);
             font-family: var(--font, sans-serif);
         }
 
         .modal-header {
             padding: 16px 24px;
-            border-bottom: 1px solid var(--border, rgba(255,255,255,0.1));
+            border-bottom: 1px solid var(--border, #E8D9CE);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: var(--bg-elevated, #1f2937);
+            background: var(--bg-elevated, #F3EBE1);
         }
 
         .modal-header h3 {
             margin: 0;
             font-size: 1.1rem;
             font-weight: 600;
+            color: var(--text-primary, #2B1625);
         }
 
         .close-btn {
             background: none;
             border: none;
-            color: var(--text-muted, #9ca3af);
+            color: var(--text-muted, #9E7B95);
             font-size: 1.5rem;
             cursor: pointer;
             line-height: 1;
@@ -58,25 +64,25 @@ export class TermsModal extends LitElement {
             overflow-y: auto;
             font-size: 0.9rem;
             line-height: 1.6;
-            color: var(--text-muted, #d1d5db);
+            color: var(--text-secondary, #704764);
         }
 
         .modal-body h4 {
-            color: var(--text-primary, #ffffff);
+            color: var(--text-primary, #2B1625);
             margin: 16px 0 8px 0;
             font-size: 0.95rem;
         }
 
         .modal-footer {
             padding: 16px 24px;
-            border-top: 1px solid var(--border, rgba(255,255,255,0.1));
+            border-top: 1px solid var(--border, #E8D9CE);
             display: flex;
             justify-content: flex-end;
-            background: var(--bg-elevated, #1f2937);
+            background: var(--bg-elevated, #F3EBE1);
         }
 
         .accept-btn {
-            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            background: linear-gradient(135deg, #BE185D, #7E22CE);
             color: white;
             border: none;
             padding: 8px 20px;
@@ -92,7 +98,7 @@ export class TermsModal extends LitElement {
     `;
 
     static properties = {
-        isOpen: { type: Boolean },
+        isOpen: { type: Boolean, reflect: true, attribute: 'is-open' },
         onClose: { type: Function },
     };
 

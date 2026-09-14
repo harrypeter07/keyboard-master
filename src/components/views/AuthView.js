@@ -10,10 +10,10 @@ export class AuthView extends LitElement {
             justify-content: center;
             height: 100%;
             padding: var(--space-md);
-            color: var(--text-primary);
+            color: var(--text-primary, #2B1625);
             font-family: var(--font);
             box-sizing: border-box;
-            background: var(--bg-app);
+            background: var(--bg-app, #FAF6F0);
             position: relative;
             overflow-y: auto;
         }
@@ -21,11 +21,11 @@ export class AuthView extends LitElement {
         .auth-card {
             width: 100%;
             max-width: 360px;
-            background: var(--bg-surface);
-            border: 1px solid var(--border);
+            background: var(--bg-surface, #FFFDF9);
+            border: 1px solid var(--border, #E8D9CE);
             border-radius: var(--radius-lg, 16px);
-            padding: 24px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            padding: 28px;
+            box-shadow: 0 20px 40px rgba(43, 22, 37, 0.08);
             display: flex;
             flex-direction: column;
             gap: 16px;
@@ -36,16 +36,17 @@ export class AuthView extends LitElement {
         }
 
         .auth-header h2 {
-            font-size: 1.3rem;
+            font-size: 1.4rem;
+            font-weight: 700;
             margin: 0 0 6px 0;
-            background: linear-gradient(135deg, var(--accent, #3b82f6), #8b5cf6);
+            background: linear-gradient(135deg, #BE185D, #7E22CE);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
         .auth-header p {
-            font-size: 0.8rem;
-            color: var(--text-muted);
+            font-size: 0.82rem;
+            color: var(--text-secondary, #704764);
             margin: 0;
         }
 
@@ -56,24 +57,25 @@ export class AuthView extends LitElement {
         }
 
         .form-group label {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            font-weight: 500;
+            font-size: 0.78rem;
+            color: var(--text-secondary, #704764);
+            font-weight: 600;
         }
 
         .form-group input {
-            background: var(--bg-elevated, rgba(255,255,255,0.05));
-            border: 1px solid var(--border);
+            background: var(--bg-elevated, #F3EBE1);
+            border: 1px solid var(--border, #E8D9CE);
             border-radius: var(--radius-md, 8px);
-            padding: 8px 12px;
-            color: var(--text-primary);
-            font-size: 0.85rem;
+            padding: 10px 14px;
+            color: var(--text-primary, #2B1625);
+            font-size: 0.88rem;
             outline: none;
-            transition: border-color var(--transition);
+            transition: border-color var(--transition), box-shadow var(--transition);
         }
 
         .form-group input:focus {
-            border-color: var(--accent);
+            border-color: #BE185D;
+            box-shadow: 0 0 0 2px rgba(190, 24, 93, 0.15);
         }
 
         .terms-row {
@@ -81,7 +83,7 @@ export class AuthView extends LitElement {
             align-items: flex-start;
             gap: 8px;
             font-size: 0.75rem;
-            color: var(--text-muted);
+            color: var(--text-secondary, #704764);
             line-height: 1.3;
         }
 
@@ -91,39 +93,42 @@ export class AuthView extends LitElement {
         }
 
         .terms-link {
-            color: var(--accent, #3b82f6);
+            color: #BE185D;
+            font-weight: 600;
             text-decoration: underline;
             cursor: pointer;
         }
 
         .auth-btn {
-            background: linear-gradient(135deg, var(--accent, #3b82f6), #8b5cf6);
+            background: linear-gradient(135deg, #BE185D, #7E22CE);
             color: white;
             border: none;
             border-radius: var(--radius-md, 8px);
-            padding: 10px;
+            padding: 11px;
             font-weight: 600;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             cursor: pointer;
-            transition: opacity var(--transition);
+            transition: opacity var(--transition), transform var(--transition);
             margin-top: 4px;
+            box-shadow: 0 4px 12px rgba(190, 24, 93, 0.25);
         }
 
         .auth-btn:hover {
-            opacity: 0.9;
+            opacity: 0.95;
+            transform: translateY(-1px);
         }
 
         .toggle-mode {
             text-align: center;
-            font-size: 0.78rem;
-            color: var(--text-muted);
+            font-size: 0.8rem;
+            color: var(--text-secondary, #704764);
         }
 
         .toggle-mode span {
-            color: var(--accent);
+            color: #BE185D;
             cursor: pointer;
             text-decoration: underline;
-            font-weight: 500;
+            font-weight: 600;
         }
 
         .error-msg {
@@ -202,7 +207,10 @@ export class AuthView extends LitElement {
         }
 
         const endpoint = this.isSignUp ? '/api/auth/register' : '/api/auth/login';
-        const serverUrl = 'http://localhost:5000' + endpoint;
+        const baseUrl = (typeof process !== 'undefined' && process.env && process.env.API_URL)
+            ? process.env.API_URL
+            : 'https://keycompanion.vercel.app';
+        const serverUrl = baseUrl + endpoint;
 
         try {
             const res = await fetch(serverUrl, {
