@@ -181,6 +181,7 @@ function getDefaultKeybinds() {
         scrollUp: isMac ? 'Cmd+Shift+Up' : 'Ctrl+Shift+Up',
         scrollDown: isMac ? 'Cmd+Shift+Down' : 'Ctrl+Shift+Down',
         emergencyErase: isMac ? 'Cmd+Shift+E' : 'Ctrl+Shift+E',
+        toggleMcqAnswers: isMac ? 'Cmd+4' : 'Ctrl+4',
     };
 }
 
@@ -379,6 +380,27 @@ function updateGlobalShortcuts(keybinds, mainWindow, sendToRenderer, geminiSessi
             console.log(`Registered emergencyErase: ${keybinds.emergencyErase}`);
         } catch (error) {
             console.error(`Failed to register emergencyErase (${keybinds.emergencyErase}):`, error);
+        }
+    }
+
+    // Register toggle MCQ answer overlay shortcut (Ctrl+4 / Cmd+4)
+    if (keybinds.toggleMcqAnswers) {
+        try {
+            globalShortcut.register(keybinds.toggleMcqAnswers, () => {
+                console.log('Toggle MCQ answers shortcut triggered (Ctrl+4)');
+                try {
+                    const overlayWin = getTargetOverlayWindow();
+                    if (overlayWin && !overlayWin.isDestroyed()) {
+                        overlayWin.showInactive();
+                        overlayWin.webContents.send('toggle-mcq-answers-overlay');
+                    }
+                } catch (err) {
+                    console.error('Error toggling MCQ answer overlay:', err);
+                }
+            });
+            console.log(`Registered toggleMcqAnswers: ${keybinds.toggleMcqAnswers}`);
+        } catch (error) {
+            console.error(`Failed to register toggleMcqAnswers (${keybinds.toggleMcqAnswers}):`, error);
         }
     }
 }

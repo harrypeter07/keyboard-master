@@ -393,6 +393,7 @@ async function sendToGroq(transcription) {
             });
 
             saveConversationTurn(transcription, cleanedResponse);
+            extractAndEmitMcqTargets(cleanedResponse);
         } else {
             console.warn(`Groq returned no final answer (${modelToUse})`);
             logTransportEvent('groq.text.empty_response', {
@@ -520,25 +521,22 @@ function extractAndEmitMcqTargets(fullText) {
         }
 
         if (targets.length > 0) {
-            console.log(`[MCQ Target Engine] Identified ${targets.length} target blinking points:`, targets);
-            sendToRenderer('trigger-mcq-blink-targets', { targets });
-            // Legacy fallback trigger
-            sendToRenderer('trigger-mcq-blink-target', { option: targets[0].option, percentY: targets[0].top });
+            const formattedText = targets.map(t => `${t.q ? t.q + ': ' : ''}${t.option}${t.text ? ' (' + t.text + ')' : ''}`).join('  |  ');
+            console.log(`[MCQ Answer Engine] Stored ${targets.length} answers for overlay:`, formattedText);
 
-            // Direct dispatch to dedicated fullscreen transparent overlay window
+            // Direct dispatch to dedicated transparent overlay window (silent store, no auto-show)
             try {
                 const { getTargetOverlayWindow } = require('./window');
                 const overlayWin = getTargetOverlayWindow();
                 if (overlayWin && !overlayWin.isDestroyed()) {
-                    overlayWin.showInactive();
-                    overlayWin.webContents.send('trigger-mcq-blink-targets', { targets });
+                    overlayWin.webContents.send('store-mcq-answers', { text: formattedText, targets });
                 }
             } catch (overlayErr) {
-                console.warn('[MCQ Target Engine] Dedicated overlay dispatch error:', overlayErr.message);
+                console.warn('[MCQ Answer Engine] Dedicated overlay dispatch error:', overlayErr.message);
             }
         }
     } catch (e) {
-        console.warn('[MCQ Target Engine] Error checking MCQ target lights:', e.message);
+        console.warn('[MCQ Answer Engine] Error checking MCQ target options:', e.message);
     }
 }
 

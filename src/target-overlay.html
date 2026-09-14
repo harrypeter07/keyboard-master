@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>MCQ Target Overlay</title>
+    <title>MCQ Answer Overlay</title>
     <style>
         * {
             box-sizing: border-box;
@@ -20,102 +20,72 @@
             pointer-events: none;
         }
 
-        #targetsContainer {
-            width: 100vw;
-            height: 100vh;
-            position: relative;
-            pointer-events: none;
-        }
-
-        /* ── MCQ Blinking Target Pulse Dot Overlay ── */
-        .mcq-target-dot {
+        #faintAnswerBox {
             position: fixed;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: #00f2fe;
-            box-shadow: 0 0 16px #00f2fe, 0 0 32px #e100ff, 0 0 50px #00f2fe;
-            border: 2px solid #ffffff;
+            top: 20px;
+            right: 24px;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.45);
+            font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace, sans-serif;
+            font-size: 11px;
+            line-height: 1.4;
+            padding: 6px 10px;
+            pointer-events: none;
+            display: none;
             z-index: 999999;
-            pointer-events: none;
-            animation: mcq-pulse 0.75s ease-in-out infinite alternate;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transform: translate(-50%, -50%);
-        }
-
-        .mcq-target-badge {
-            position: absolute;
-            left: 26px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(15, 23, 42, 0.94);
-            color: #00f2fe;
-            border: 1px solid #00f2fe;
-            padding: 3px 9px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: 800;
-            white-space: nowrap;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.7);
-            font-family: 'JetBrains Mono', monospace, sans-serif;
-            pointer-events: none;
-        }
-
-        @keyframes mcq-pulse {
-            0% {
-                transform: translate(-50%, -50%) scale(0.9);
-                opacity: 0.75;
-                box-shadow: 0 0 10px #00f2fe, 0 0 20px #e100ff;
-            }
-            100% {
-                transform: translate(-50%, -50%) scale(1.6);
-                opacity: 1;
-                box-shadow: 0 0 35px #00f2fe, 0 0 60px #e100ff, 0 0 85px #00f2fe;
-            }
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+            white-space: pre-wrap;
+            max-width: 420px;
+            word-break: break-word;
         }
     </style>
 </head>
 <body>
-    <div id="targetsContainer"></div>
+    <div id="faintAnswerBox"></div>
 
     <script>
         const { ipcRenderer } = require('electron');
 
-        let dismissTimeout = null;
+        let isVisible = false;
+        let answerText = '';
+
+        ipcRenderer.on('store-mcq-answers', (event, data) => {
+            console.log('[Target Overlay] Stored MCQ answers:', data);
+            answerText = data?.text || '';
+            const box = document.getElementById('faintAnswerBox');
+            if (box) {
+                box.textContent = answerText;
+            }
+        });
 
         ipcRenderer.on('trigger-mcq-blink-targets', (event, data) => {
             console.log('[Target Overlay] Received MCQ targets:', data);
             const targets = data?.targets || [];
-            const container = document.getElementById('targetsContainer');
-            container.innerHTML = '';
+            if (targets.length > 0) {
+                answerText = targets.map(t => `${t.q ? t.q + ': ' : ''}${t.option}`).join('  |  ');
+                const box = document.getElementById('faintAnswerBox');
+                if (box) {
+                    box.textContent = answerText;
+                }
+            }
+        });
 
-            if (targets.length === 0) return;
-
-            targets.forEach(t => {
-                const dot = document.createElement('div');
-                dot.className = 'mcq-target-dot';
-                dot.style.top = `${t.top}%`;
-                dot.style.left = `${t.left || 28}%`;
-
-                const badge = document.createElement('span');
-                badge.className = 'mcq-target-badge';
-                badge.textContent = t.q ? `${t.q}: ${t.option}` : t.option;
-                dot.appendChild(badge);
-
-                container.appendChild(dot);
-            });
-
-            clearTimeout(dismissTimeout);
-            dismissTimeout = setTimeout(() => {
-                container.innerHTML = '';
-            }, 10000);
+        ipcRenderer.on('toggle-mcq-answers-overlay', () => {
+            isVisible = !isVisible;
+            const box = document.getElementById('faintAnswerBox');
+            if (box) {
+                box.style.display = isVisible ? 'block' : 'none';
+            }
         });
 
         ipcRenderer.on('clear-mcq-targets', () => {
-            const container = document.getElementById('targetsContainer');
-            if (container) container.innerHTML = '';
+            answerText = '';
+            isVisible = false;
+            const box = document.getElementById('faintAnswerBox');
+            if (box) {
+                box.textContent = '';
+                box.style.display = 'none';
+            }
         });
     </script>
 </body>
