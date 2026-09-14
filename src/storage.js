@@ -106,6 +106,10 @@ function getLimitsPath() {
     return path.join(getConfigDir(), 'limits.json');
 }
 
+function getCloudSessionPath() {
+    return path.join(getConfigDir(), 'cloud_session.json');
+}
+
 function getHistoryDir() {
     return path.join(getConfigDir(), 'history');
 }
@@ -593,6 +597,29 @@ function deleteAllSessions() {
     }
 }
 
+// ============ CLOUD USER SESSION ============
+
+function getCloudSession() {
+    return readJsonFile(getCloudSessionPath(), null);
+}
+
+function setCloudSession(sessionData) {
+    return writeJsonFile(getCloudSessionPath(), sessionData);
+}
+
+function clearCloudSession() {
+    const sessionPath = getCloudSessionPath();
+    try {
+        if (fs.existsSync(sessionPath)) {
+            fs.unlinkSync(sessionPath);
+        }
+        return true;
+    } catch (err) {
+        console.error('Error clearing cloud session:', err.message);
+        return false;
+    }
+}
+
 // ============ CLEAR ALL DATA ============
 
 function clearAllData() {
@@ -644,6 +671,11 @@ module.exports = {
     DEFAULT_KEY_2,
     incrementCharUsage,
     getModelForToday,
+
+    // Cloud Session
+    getCloudSession,
+    setCloudSession,
+    clearCloudSession,
 
     // History
     saveSession,

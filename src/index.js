@@ -277,6 +277,46 @@ function setupStorageIpcHandlers() {
         }
     });
 
+    // ============ CLOUD SESSION ============
+    ipcMain.handle('storage:get-cloud-session', async () => {
+        try {
+            return { success: true, data: storage.getCloudSession() };
+        } catch (error) {
+            console.error('Error getting cloud session:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    ipcMain.handle('storage:set-cloud-session', async (event, sessionData) => {
+        try {
+            storage.setCloudSession(sessionData);
+            return { success: true };
+        } catch (error) {
+            console.error('Error setting cloud session:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    ipcMain.handle('storage:clear-cloud-session', async () => {
+        try {
+            storage.clearCloudSession();
+            return { success: true };
+        } catch (error) {
+            console.error('Error clearing cloud session:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    ipcMain.handle('save-cloud-token', async (event, token) => {
+        try {
+            const current = storage.getCloudSession() || {};
+            storage.setCloudSession({ ...current, token });
+            return { success: true };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    });
+
     // ============ CLEAR ALL ============
     ipcMain.handle('storage:clear-all', async () => {
         try {
