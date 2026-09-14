@@ -3,61 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Keyboard Master Admin Dashboard</title>
+    <title>Keyboard Master Admin Console</title>
     <link rel="icon" type="image/png" href="/favicon.png">
     <link rel="apple-touch-icon" href="/logo.png">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            /* Lighter Cream + Dark Pink + Lavender Palette */
-            --bg: #FAF6F0;
+            --bg-dark: #0F172A;
+            --bg: #FAF9F6;
             --surface: #FFFFFF;
-            --surface-hover: #F8F3EC;
-            --border: #EFE6DA;
-            
-            --dark-pink: #BE185D;
-            --dark-pink-hover: #9D174D;
-            --pink-glow: rgba(190, 24, 93, 0.22);
-            
-            --lavender: #7E22CE;
-            --lavender-light: #A5B4FC;
-            --lavender-glow: rgba(126, 34, 206, 0.18);
-            
-            --primary: #BE185D;
-            --primary-glow: rgba(190, 24, 93, 0.25);
-            --accent: #7E22CE;
-            
-            --danger: #DC2626;
-            --success: #059669;
-            --warning: #D97706;
-            
-            --text: #1F1528;
-            --muted: #6B587B;
-            
-            --card-shadow: 0 10px 30px rgba(126, 34, 206, 0.06), 0 2px 8px rgba(190, 24, 93, 0.04);
+            --surface-subtle: #F8FAFC;
+            --surface-hover: #F1F5F9;
+            --border: #E2E8F0;
+            --border-highlight: #CBD5E1;
+
+            --pink-primary: #BE185D;
+            --pink-hover: #9D174D;
+            --pink-soft: rgba(190, 24, 93, 0.08);
+            --pink-glow: rgba(190, 24, 93, 0.25);
+
+            --purple-primary: #7E22CE;
+            --purple-soft: rgba(126, 34, 206, 0.08);
+            --purple-glow: rgba(126, 34, 206, 0.2);
+
+            --text-main: #0F172A;
+            --text-muted: #64748B;
+            --text-light: #94A3B8;
+
+            --success: #10B981;
+            --success-soft: rgba(16, 185, 129, 0.12);
+            --danger: #EF4444;
+            --danger-soft: rgba(239, 68, 68, 0.12);
+            --warning: #F59E0B;
+            --warning-soft: rgba(245, 158, 11, 0.12);
+            --info: #3B82F6;
+            --info-soft: rgba(59, 130, 246, 0.12);
+
+            --radius-sm: 8px;
+            --radius-md: 14px;
+            --radius-lg: 20px;
+
+            --shadow-card: 0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.03);
+            --shadow-modal: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Inter', sans-serif;
+            font-family: 'Plus Jakarta Sans', sans-serif;
         }
 
         body {
             background: var(--bg);
-            color: var(--text);
+            color: var(--text-main);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            overflow-x: hidden;
         }
 
-        /* ── Header ── */
+        code, pre, .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* ── Header Bar ── */
         header {
-            background: rgba(255, 253, 249, 0.9);
-            backdrop-filter: blur(12px);
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
             border-bottom: 1px solid var(--border);
-            padding: 1rem 2rem;
+            padding: 0.9rem 2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -66,141 +82,176 @@
             z-index: 100;
         }
 
-        .logo {
+        .header-brand {
             display: flex;
             align-items: center;
-            gap: 10px;
-            font-size: 1.25rem;
+            gap: 12px;
+        }
+
+        .header-brand img {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px var(--pink-glow);
+        }
+
+        .header-brand-title {
+            font-size: 1.15rem;
             font-weight: 800;
-            background: linear-gradient(135deg, var(--dark-pink), var(--lavender));
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, var(--pink-primary), var(--purple-primary));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
-        /* ── Container ── */
-        .container {
-            max-width: 1300px;
-            margin: 2rem auto;
+        .header-brand-badge {
+            background: var(--pink-soft);
+            color: var(--pink-primary);
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        /* ── Main Container ── */
+        .app-container {
+            max-width: 1400px;
+            margin: 1.8rem auto;
             padding: 0 1.5rem;
             width: 100%;
+            flex: 1;
         }
 
-        /* ── Auth Screen ── */
-        .auth-card {
-            max-width: 400px;
-            margin: 5rem auto;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            padding: 2.5rem;
-            box-shadow: var(--card-shadow);
+        /* ── Navigation Tabs ── */
+        .nav-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 1.8rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 8px;
+            overflow-x: auto;
         }
 
-        .auth-card h2 {
-            margin-bottom: 1.5rem;
-            font-size: 1.5rem;
-            text-align: center;
-            color: var(--text);
-        }
-
-        .form-group {
-            margin-bottom: 1.2rem;
-        }
-
-        .form-group label {
-            display: block;
-            font-size: 0.85rem;
-            color: var(--muted);
-            margin-bottom: 0.4rem;
+        .nav-tab {
+            padding: 0.6rem 1.2rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.88rem;
             font-weight: 600;
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 0.75rem 1rem;
-            background: #FFFDF9;
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            color: var(--text);
-            font-size: 0.95rem;
-            outline: none;
-            transition: all 0.3s ease;
-        }
-
-        .form-control:focus {
-            border-color: var(--dark-pink);
-            box-shadow: 0 0 12px var(--pink-glow);
-        }
-
-        .btn {
-            padding: 0.75rem 1.5rem;
-            border-radius: 10px;
-            font-size: 0.9rem;
-            font-weight: 700;
+            color: var(--text-muted);
             cursor: pointer;
-            border: none;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
             display: inline-flex;
             align-items: center;
-            justify-content: center;
-            gap: 6px;
+            gap: 8px;
+            user-select: none;
+            border: 1px solid transparent;
         }
 
-        .btn-primary {
-            background: linear-gradient(135deg, var(--dark-pink), var(--lavender));
+        .nav-tab:hover {
+            color: var(--text-main);
+            background: var(--surface-hover);
+        }
+
+        .nav-tab.active {
+            color: var(--pink-primary);
+            background: var(--pink-soft);
+            border-color: rgba(190, 24, 93, 0.15);
+        }
+
+        .nav-tab-badge {
+            background: rgba(0,0,0,0.06);
+            padding: 2px 7px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .nav-tab.active .nav-tab-badge {
+            background: var(--pink-primary);
             color: white;
-            width: 100%;
-            box-shadow: 0 8px 20px var(--pink-glow);
         }
 
-        .btn-primary:hover {
-            opacity: 0.95;
-            box-shadow: 0 12px 28px var(--lavender-glow);
-            transform: translateY(-1px);
-        }
-
-        .btn-danger { background: var(--danger); color: white; }
-        .btn-success { background: var(--success); color: white; }
-        .btn-warning { background: var(--warning); color: white; }
-        .btn-sm { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
-
-        /* ── Grid & Stats ── */
+        /* ── Stats Grid ── */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
+            gap: 1.2rem;
+            margin-bottom: 1.8rem;
         }
 
         .stat-card {
             background: var(--surface);
             border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 1.5rem;
+            border-radius: var(--radius-md);
+            padding: 1.4rem;
             position: relative;
             overflow: hidden;
-            box-shadow: var(--card-shadow);
+            box-shadow: var(--shadow-card);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, var(--dark-pink), var(--lavender));
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px -4px rgba(15, 23, 42, 0.08);
         }
 
-        .stat-label { font-size: 0.85rem; color: var(--muted); font-weight: 600; }
-        .stat-value { font-size: 2rem; font-weight: 800; margin-top: 0.5rem; color: var(--text); }
+        .stat-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.6rem;
+        }
 
-        /* ── Section Cards & Tables ── */
+        .stat-label {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .stat-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        .stat-value {
+            font-size: 2.1rem;
+            font-weight: 800;
+            color: var(--text-main);
+            letter-spacing: -0.03em;
+        }
+
+        .stat-subtext {
+            font-size: 0.78rem;
+            color: var(--text-light);
+            margin-top: 0.3rem;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* ── Section Cards ── */
         .section-card {
             background: var(--surface);
             border: 1px solid var(--border);
-            border-radius: 18px;
-            padding: 1.8rem;
-            margin-bottom: 2rem;
-            box-shadow: var(--card-shadow);
+            border-radius: var(--radius-lg);
+            padding: 1.6rem;
+            margin-bottom: 1.8rem;
+            box-shadow: var(--shadow-card);
         }
 
         .section-header {
@@ -208,46 +259,380 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 1.2rem;
+            flex-wrap: wrap;
+            gap: 12px;
         }
 
-        .section-title { font-size: 1.15rem; font-weight: 700; color: var(--text); }
+        .section-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-subtitle {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        /* ── Controls & Filter Bar ── */
+        .filter-bar {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+
+        .search-input-wrap {
+            position: relative;
+            flex: 1;
+            min-width: 240px;
+        }
+
+        .search-input-wrap svg {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-light);
+            width: 16px;
+            height: 16px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.6rem 0.9rem 0.6rem 2.3rem;
+            background: var(--surface-subtle);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 0.88rem;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .search-input:focus {
+            background: white;
+            border-color: var(--pink-primary);
+            box-shadow: 0 0 0 3px var(--pink-soft);
+        }
+
+        /* ── Form Controls & Buttons ── */
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 0.35rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.65rem 0.9rem;
+            background: var(--surface-subtle);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 0.9rem;
+            color: var(--text-main);
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .form-control:focus {
+            background: white;
+            border-color: var(--pink-primary);
+            box-shadow: 0 0 0 3px var(--pink-soft);
+        }
+
+        .btn {
+            padding: 0.6rem 1.2rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            user-select: none;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--pink-primary), var(--purple-primary));
+            color: white;
+            box-shadow: 0 4px 14px var(--pink-glow);
+        }
+
+        .btn-primary:hover {
+            opacity: 0.92;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: var(--surface-subtle);
+            border-color: var(--border);
+            color: var(--text-main);
+        }
+
+        .btn-secondary:hover {
+            background: var(--surface-hover);
+            border-color: var(--border-highlight);
+        }
+
+        .btn-danger {
+            background: var(--danger-soft);
+            color: var(--danger);
+            border-color: rgba(239, 68, 68, 0.2);
+        }
+
+        .btn-danger:hover {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-success {
+            background: var(--success-soft);
+            color: var(--success);
+            border-color: rgba(16, 185, 129, 0.2);
+        }
+
+        .btn-success:hover {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-warning {
+            background: var(--warning-soft);
+            color: var(--warning);
+            border-color: rgba(245, 158, 11, 0.2);
+        }
+
+        .btn-warning:hover {
+            background: var(--warning);
+            color: white;
+        }
+
+        .btn-sm {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.78rem;
+        }
+
+        /* ── Data Tables ── */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+        }
 
         table {
             width: 100%;
             border-collapse: collapse;
             text-align: left;
-            font-size: 0.9rem;
+            font-size: 0.88rem;
         }
 
         th {
-            background: #FAF6F0;
-            padding: 0.9rem 1rem;
-            color: var(--muted);
+            background: var(--surface-subtle);
+            padding: 0.85rem 1rem;
+            color: var(--text-muted);
             font-weight: 600;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
             border-bottom: 1px solid var(--border);
         }
 
         td {
-            padding: 1rem;
+            padding: 0.95rem 1rem;
             border-bottom: 1px solid var(--border);
-            color: var(--text);
+            color: var(--text-main);
+            vertical-align: middle;
         }
 
-        tr:hover td { background: var(--surface-hover); }
+        tr:last-child td {
+            border-bottom: none;
+        }
 
+        tr:hover td {
+            background: var(--surface-hover);
+        }
+
+        /* ── Status Badges ── */
         .badge {
-            display: inline-block;
-            padding: 0.25rem 0.6rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 0.25rem 0.65rem;
             border-radius: 20px;
             font-size: 0.75rem;
             font-weight: 700;
             text-transform: uppercase;
+            letter-spacing: 0.03em;
         }
 
-        .badge-success { background: rgba(5, 150, 105, 0.12); color: var(--success); }
-        .badge-danger { background: rgba(220, 38, 38, 0.12); color: var(--danger); }
-        .badge-warning { background: rgba(217, 119, 6, 0.12); color: var(--warning); }
-        .badge-primary { background: rgba(190, 24, 93, 0.12); color: var(--dark-pink); }
+        .badge-success { background: var(--success-soft); color: var(--success); }
+        .badge-danger { background: var(--danger-soft); color: var(--danger); }
+        .badge-warning { background: var(--warning-soft); color: var(--warning); }
+        .badge-primary { background: var(--pink-soft); color: var(--pink-primary); }
+        .badge-purple { background: var(--purple-soft); color: var(--purple-primary); }
+        .badge-muted { background: rgba(0,0,0,0.06); color: var(--text-muted); }
+
+        /* ── Custom Modal Engine ── */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(6px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-card {
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 500px;
+            padding: 1.8rem;
+            box-shadow: var(--shadow-modal);
+            transform: scale(0.95);
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            border: 1px solid var(--border);
+        }
+
+        .modal-overlay.active .modal-card {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.2rem;
+        }
+
+        .modal-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .modal-close {
+            background: transparent;
+            border: none;
+            font-size: 1.4rem;
+            color: var(--text-light);
+            cursor: pointer;
+            padding: 4px;
+            line-height: 1;
+            border-radius: 6px;
+        }
+
+        .modal-close:hover {
+            color: var(--text-main);
+            background: var(--surface-hover);
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 1.5rem;
+        }
+
+        /* ── Toast Notifications ── */
+        #toastContainer {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        .toast {
+            background: var(--bg-dark);
+            color: white;
+            padding: 0.85rem 1.3rem;
+            border-radius: var(--radius-md);
+            font-size: 0.88rem;
+            font-weight: 500;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            pointer-events: auto;
+            transform: translateY(20px);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            border-left: 4px solid var(--pink-primary);
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast-success { border-left-color: var(--success); }
+        .toast-error { border-left-color: var(--danger); }
+        .toast-warning { border-left-color: var(--warning); }
+
+        /* ── Auth Card View ── */
+        .auth-container {
+            max-width: 420px;
+            margin: 5rem auto;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 2.5rem;
+            box-shadow: var(--shadow-modal);
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .auth-header img {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            margin-bottom: 1rem;
+            box-shadow: 0 8px 20px var(--pink-glow);
+        }
+
+        .auth-header h2 {
+            font-size: 1.4rem;
+            font-weight: 800;
+        }
+
+        .auth-header p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
 
         .hidden { display: none !important; }
     </style>
@@ -256,30 +641,39 @@
 </head>
 <body>
 
+    <!-- Header -->
     <header>
-        <div class="logo">
-            <img src="/logo.png" alt="Keyboard Master Logo" style="width: 30px; height: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(190, 24, 93, 0.2);">
-            Keyboard Master Admin
+        <div class="header-brand">
+            <img src="/logo.png" alt="Logo">
+            <span class="header-brand-title">Keyboard Master</span>
+            <span class="header-brand-badge">Admin Console</span>
         </div>
-        <button id="logoutBtn" class="btn btn-sm btn-danger hidden" onclick="logout()">Logout</button>
+        <div class="header-actions">
+            <button id="logoutBtn" class="btn btn-sm btn-danger hidden" onclick="logout()">Logout</button>
+        </div>
     </header>
 
-    <div class="container">
+    <!-- App Main Container -->
+    <div class="app-container">
+
         <!-- Auth View -->
-        <div id="authView" class="auth-card">
-            <h2>Admin Login</h2>
+        <div id="authView" class="auth-container">
+            <div class="auth-header">
+                <img src="/logo.png" alt="Keyboard Master">
+                <h2>Admin Login</h2>
+                <p>Access the master dashboard console</p>
+            </div>
             <div class="form-group">
                 <label>Admin Email</label>
-                <input type="email" id="adminEmail" class="form-control" placeholder="Enter admin email">
+                <input type="email" id="adminEmail" class="form-control" placeholder="admin@keyboardmaster.com">
             </div>
             <div class="form-group">
                 <label>Password</label>
                 <input type="password" id="adminPassword" class="form-control" placeholder="••••••••">
             </div>
-            <button id="loginBtn" class="btn btn-primary" onclick="loginAdmin()">Sign In to Dashboard</button>
+            <button id="loginBtn" class="btn btn-primary" style="width: 100%; padding: 0.8rem;" onclick="loginAdmin()">Sign In to Console</button>
 
-            <!-- Google OAuth SSO Option -->
-            <div style="display: flex; align-items: center; gap: 10px; margin: 1.2rem 0; color: var(--muted); font-size: 0.8rem;">
+            <div style="display: flex; align-items: center; gap: 10px; margin: 1.4rem 0; color: var(--text-light); font-size: 0.78rem; font-weight: 600;">
                 <div style="flex: 1; height: 1px; background: var(--border);"></div>
                 <span>OR SIGN IN WITH GOOGLE</span>
                 <div style="flex: 1; height: 1px; background: var(--border);"></div>
@@ -287,159 +681,338 @@
 
             <div id="googleBtnContainer" style="width: 100%; display: flex; justify-content: center; min-height: 44px; margin-bottom: 8px;"></div>
 
-            <a href="/api/auth/google/login" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 0.65rem 1rem; background: #ffffff; color: #3c4043; border: 1px solid #dadce0; border-radius: 24px; font-weight: 500; font-size: 0.85rem; text-decoration: none; box-shadow: 0 1px 3px rgba(0,0,0,0.08); transition: background 0.2s;" onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='#ffffff'">
+            <a href="/api/auth/google/login" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 0.65rem 1rem; background: #ffffff; color: #3c4043; border: 1px solid var(--border); border-radius: 24px; font-weight: 500; font-size: 0.85rem; text-decoration: none; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
                 <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.616z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>
                 Sign in with Google (Direct Link)
             </a>
 
-            <div id="authError" style="color: var(--danger); font-size: 0.85rem; margin-top: 1rem; text-align: center;"></div>
+            <div id="authError" style="margin-top: 1rem;"></div>
         </div>
 
-        <!-- Main Dashboard View -->
+        <!-- Dashboard Console View -->
         <div id="dashView" class="hidden">
-            <!-- Stats Row -->
+
+            <!-- Stats Grid -->
             <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-label">Total Users</div>
+                    <div class="stat-card-header">
+                        <span class="stat-label">Total Users</span>
+                        <div class="stat-icon" style="background: var(--purple-soft); color: var(--purple-primary);">👥</div>
+                    </div>
                     <div class="stat-value" id="statUsers">0</div>
+                    <div class="stat-subtext">Registered user accounts</div>
                 </div>
+
                 <div class="stat-card">
-                    <div class="stat-label">Active Instances</div>
+                    <div class="stat-card-header">
+                        <span class="stat-label">Active Instances</span>
+                        <div class="stat-icon" style="background: var(--success-soft); color: var(--success);">💻</div>
+                    </div>
                     <div class="stat-value" id="statInstances">0</div>
+                    <div class="stat-subtext">Live running desktop apps</div>
                 </div>
+
                 <div class="stat-card">
-                    <div class="stat-label">Paid Subscriptions</div>
+                    <div class="stat-card-header">
+                        <span class="stat-label">Paid Members</span>
+                        <div class="stat-icon" style="background: var(--pink-soft); color: var(--pink-primary);">👑</div>
+                    </div>
                     <div class="stat-value" id="statPaid">0</div>
+                    <div class="stat-subtext">Weekly & Monthly subscribers</div>
                 </div>
+
                 <div class="stat-card">
-                    <div class="stat-label">Banned Users</div>
-                    <div class="stat-value" id="statBanned">0</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Active Key Pool</div>
+                    <div class="stat-card-header">
+                        <span class="stat-label">Gemini Key Pool</span>
+                        <div class="stat-icon" style="background: var(--info-soft); color: var(--info);">🔑</div>
+                    </div>
                     <div class="stat-value" id="statKeys">0</div>
+                    <div class="stat-subtext">Active server keys available</div>
                 </div>
             </div>
 
-            <!-- Gemini API Key Pool Section -->
-            <div class="section-card">
-                <div class="section-header">
-                    <div>
-                        <div class="section-title">🔑 Server Gemini API Key Pool</div>
-                        <div style="font-size: 0.8rem; color: var(--muted); margin-top: 4px;">
-                            Unlimited key pool with zero-latency client caching & automatic 429 quota rotation for paid members.
-                        </div>
-                    </div>
-                    <button class="btn btn-sm btn-warning" onclick="resetAllKeyQuotas()">⚡ Reset All Quota Limits</button>
+            <!-- Navigation Tabs -->
+            <div class="nav-tabs">
+                <div class="nav-tab active" onclick="switchTab('usersTab')">
+                    👥 User Accounts <span class="nav-tab-badge" id="tabCountUsers">0</span>
                 </div>
+                <div class="nav-tab" onclick="switchTab('keysTab')">
+                    🔑 Gemini Key Pool <span class="nav-tab-badge" id="tabCountKeys">0</span>
+                </div>
+                <div class="nav-tab" onclick="switchTab('instancesTab')">
+                    💻 Live Devices <span class="nav-tab-badge" id="tabCountInstances">0</span>
+                </div>
+                <div class="nav-tab" onclick="switchTab('settingsTab')">
+                    ⚙️ SaaS Config & Pricing
+                </div>
+            </div>
 
-                <!-- Add Keys Box -->
-                <div style="background: #faf6f0; padding: 1.2rem; border-radius: 12px; margin-bottom: 1.5rem; border: 1px solid var(--border);">
-                    <div style="font-weight: 600; font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--text);">Add Keys to Pool (Bulk or Single)</div>
-                    <div style="display: grid; grid-template-columns: 1fr 220px; gap: 1rem; align-items: start;">
+            <!-- Tab 1: Users View -->
+            <div id="usersTab" class="tab-content">
+                <div class="section-card">
+                    <div class="section-header">
                         <div>
-                            <textarea id="newRawKeys" class="form-control" rows="3" placeholder="Paste Gemini API Keys here (one per line, or separated by commas)..."></textarea>
+                            <div class="section-title">User Accounts & Subscriptions</div>
+                            <div class="section-subtitle">Manage user plans, ban statuses, and cloud AI access.</div>
                         </div>
+                    </div>
+                    <div class="filter-bar">
+                        <div class="search-input-wrap">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                            <input type="text" id="userSearch" class="search-input" placeholder="Search by email or IP address..." oninput="filterUsers()">
+                        </div>
+                        <select id="userPlanFilter" class="form-control" style="width: 160px;" onchange="filterUsers()">
+                            <option value="all">All Plans</option>
+                            <option value="free">Free</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly">Monthly</option>
+                            <option value="pro">Pro / Admin</option>
+                        </select>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table id="usersTable">
+                            <thead>
+                                <tr>
+                                    <th>User Email</th>
+                                    <th>Role & Plan</th>
+                                    <th>Account Status</th>
+                                    <th>Cloud AI Access</th>
+                                    <th>Created IP</th>
+                                    <th>Last Active IP</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody><!-- Dynamic Users --></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 2: Gemini Key Pool View -->
+            <div id="keysTab" class="tab-content hidden">
+                <div class="section-card">
+                    <div class="section-header">
                         <div>
-                            <input type="text" id="newKeyLabel" class="form-control" placeholder="Label (e.g. Prod Key 1)" style="margin-bottom: 0.6rem;">
-                            <button class="btn btn-primary" onclick="addKeysToPool()">+ Add Keys to Pool</button>
+                            <div class="section-title">🔑 Server Gemini API Key Pool</div>
+                            <div class="section-subtitle">Auto-rotating key pool for zero-latency paid member execution.</div>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-primary btn-sm" onclick="openModal('addKeysModal')">+ Add Keys</button>
+                            <button class="btn btn-warning btn-sm" onclick="openModal('resetQuotasModal')">⚡ Reset All Quota Limits</button>
                         </div>
                     </div>
-                </div>
 
-                <!-- Keys Pool Table -->
-                <table id="keysTable">
-                    <thead>
-                        <tr>
-                            <th>Key Label</th>
-                            <th>API Key</th>
-                            <th>Status</th>
-                            <th>Usage Count</th>
-                            <th>Last Used</th>
-                            <th>Exhausted Models</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody><!-- Dynamic Key Rows --></tbody>
-                </table>
+                    <div class="table-responsive">
+                        <table id="keysTable">
+                            <thead>
+                                <tr>
+                                    <th>Key Label</th>
+                                    <th>API Key (Masked)</th>
+                                    <th>Status</th>
+                                    <th>Usage Count</th>
+                                    <th>Last Used</th>
+                                    <th>Exhausted Models</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody><!-- Dynamic Keys --></tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
 
-            <!-- Pricing & Cloud API Key Configuration -->
-            <div class="section-card">
-                <div class="section-header">
-                    <div class="section-title">Pricing & Server API Settings</div>
+            <!-- Tab 3: Live Instances View -->
+            <div id="instancesTab" class="tab-content hidden">
+                <div class="section-card">
+                    <div class="section-header">
+                        <div>
+                            <div class="section-title">💻 Live Running Devices</div>
+                            <div class="section-subtitle">Remote desktop device heartbeat monitoring and remote kill control.</div>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table id="instancesTable">
+                            <thead>
+                                <tr>
+                                    <th>User Email</th>
+                                    <th>Device ID</th>
+                                    <th>Platform</th>
+                                    <th>IP Address</th>
+                                    <th>Last Heartbeat</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody><!-- Dynamic Instances --></tbody>
+                        </table>
+                    </div>
                 </div>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
-                    <div class="form-group">
-                        <label>Weekly Plan Price ($ USD)</label>
-                        <input type="number" step="0.01" id="weeklyPrice" class="form-control" value="9.99">
-                    </div>
-                    <div class="form-group">
-                        <label>Monthly Plan Price ($ USD)</label>
-                        <input type="number" step="0.01" id="monthlyPrice" class="form-control" value="29.99">
-                    </div>
-                    <div class="form-group" style="grid-column: span 2;">
-                        <label>Fallback Server Gemini API Key (Single Backup)</label>
-                        <input type="password" id="serverApiKey" class="form-control" placeholder="AQ.Ab8RN6...">
-                    </div>
-                    <div class="form-group" style="grid-column: span 2;">
-                        <label>Live Installer Download URL (Google Drive / AWS S3 / Direct EXE Link)</label>
-                        <input type="text" id="downloadUrl" class="form-control" placeholder="https://drive.google.com/uc?export=download&id=YOUR_FILE_ID">
-                    </div>
-                    <div class="form-group" style="grid-column: span 2;">
-                        <label>Latest Released App Version (Bumps In-App Auto-Updater e.g. 0.8.0)</label>
-                        <input type="text" id="latestVersion" class="form-control" placeholder="0.8.0">
-                    </div>
-                </div>
-                <button class="btn btn-primary" style="width: auto; margin-top: 1rem;" onclick="savePricing()">Save Settings</button>
             </div>
 
-            <!-- User Management Table -->
-            <div class="section-card">
-                <div class="section-header">
-                    <div class="section-title">User Accounts & Subscriptions</div>
+            <!-- Tab 4: Settings & Pricing View -->
+            <div id="settingsTab" class="tab-content hidden">
+                <div class="section-card">
+                    <div class="section-header">
+                        <div>
+                            <div class="section-title">⚙️ SaaS Pricing & Server Settings</div>
+                            <div class="section-subtitle">Configure subscription tier pricing, installer links, and fallback keys.</div>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.2rem;">
+                        <div class="form-group">
+                            <label>Weekly Plan Price ($ USD)</label>
+                            <input type="number" step="0.01" id="weeklyPrice" class="form-control" value="9.99">
+                        </div>
+                        <div class="form-group">
+                            <label>Monthly Plan Price ($ USD)</label>
+                            <input type="number" step="0.01" id="monthlyPrice" class="form-control" value="29.99">
+                        </div>
+                        <div class="form-group" style="grid-column: span 2;">
+                            <label>Single Fallback Gemini API Key (Backup)</label>
+                            <input type="password" id="serverApiKey" class="form-control" placeholder="AQ.Ab8RN6...">
+                        </div>
+                        <div class="form-group" style="grid-column: span 2;">
+                            <label>Live Installer Download Link (EXE Direct / Google Drive / AWS S3)</label>
+                            <input type="text" id="downloadUrl" class="form-control" placeholder="https://drive.google.com/uc?export=download&id=...">
+                        </div>
+                        <div class="form-group" style="grid-column: span 2;">
+                            <label>Latest App Version (Triggers In-App Auto-Updater e.g. 0.8.0)</label>
+                            <input type="text" id="latestVersion" class="form-control" placeholder="0.8.0">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" style="margin-top: 0.5rem;" onclick="savePricing()">Save Server Configuration</button>
                 </div>
-                <table id="usersTable">
-                    <thead>
-                        <tr>
-                            <th>Email</th>
-                            <th>Plan</th>
-                            <th>Status</th>
-                            <th>Cloud AI Access</th>
-                            <th>Created IP</th>
-                            <th>Last IP</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody><!-- Dynamic Users --></tbody>
-                </table>
             </div>
 
-            <!-- Active Instances Table -->
-            <div class="section-card">
-                <div class="section-header">
-                    <div class="section-title">Live App Instances (Device Lockout)</div>
-                </div>
-                <table id="instancesTable">
-                    <thead>
-                        <tr>
-                            <th>User Email</th>
-                            <th>Device ID</th>
-                            <th>Platform</th>
-                            <th>IP Address</th>
-                            <th>Last Heartbeat</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody><!-- Dynamic Instances --></tbody>
-                </table>
+        </div>
+    </div>
+
+    <!-- ── MODALS ENGINE ── -->
+
+    <!-- Edit User Plan Modal -->
+    <div id="planModal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-title">Edit Subscription Plan</div>
+                <button class="modal-close" onclick="closeModal('planModal')">&times;</button>
+            </div>
+            <div style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1.2rem;">
+                Target User: <strong id="planModalUserEmail" style="color: var(--text-main);"></strong>
+            </div>
+            <input type="hidden" id="planModalUserId">
+
+            <div class="form-group">
+                <label>Select Plan Tier</label>
+                <select id="planModalSelect" class="form-control">
+                    <option value="free">Free Tier</option>
+                    <option value="weekly">Weekly Plan ($9.99)</option>
+                    <option value="monthly">Monthly Plan ($29.99)</option>
+                    <option value="pro">Pro Plan (Unlimited)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Subscription Duration (Days)</label>
+                <input type="number" id="planModalDays" class="form-control" value="30">
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 10px; margin: 1.2rem 0; background: var(--surface-subtle); padding: 0.8rem 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border);">
+                <input type="checkbox" id="planModalCloudAccess" style="width: 18px; height: 18px; cursor: pointer;">
+                <label for="planModalCloudAccess" style="margin: 0; cursor: pointer; font-size: 0.88rem; font-weight: 600;">Enable Server Cloud API Key Access</label>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('planModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="submitUserPlan()">Save Subscription</button>
             </div>
         </div>
     </div>
 
+    <!-- Ban User Modal -->
+    <div id="banModal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-title" id="banModalTitle">Ban User Account</div>
+                <button class="modal-close" onclick="closeModal('banModal')">&times;</button>
+            </div>
+            <div style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1.2rem;">
+                User Account: <strong id="banModalUserEmail" style="color: var(--text-main);"></strong>
+            </div>
+            <input type="hidden" id="banModalUserId">
+            <input type="hidden" id="banModalStatus">
+
+            <div class="form-group" id="banReasonGroup">
+                <label>Reason for Ban</label>
+                <select id="banReasonSelect" class="form-control" onchange="checkCustomBanReason(this.value)">
+                    <option value="Violation of Terms & Conditions">Violation of Terms & Conditions</option>
+                    <option value="Multi-Device Lockout Abuse">Multi-Device Lockout Abuse</option>
+                    <option value="Payment Chargeback / Fraud">Payment Chargeback / Fraud</option>
+                    <option value="custom">Custom Reason...</option>
+                </select>
+                <input type="text" id="banReasonCustom" class="form-control hidden" placeholder="Enter custom ban reason" style="margin-top: 0.6rem;">
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('banModal')">Cancel</button>
+                <button class="btn btn-danger" id="banModalConfirmBtn" onclick="submitUserBan()">Confirm Action</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Keys Modal -->
+    <div id="addKeysModal" class="modal-overlay">
+        <div class="modal-card" style="max-width: 580px;">
+            <div class="modal-header">
+                <div class="modal-title">+ Add Gemini API Keys to Pool</div>
+                <button class="modal-close" onclick="closeModal('addKeysModal')">&times;</button>
+            </div>
+
+            <div class="form-group">
+                <label>Key Label (Optional)</label>
+                <input type="text" id="addKeysLabel" class="form-control" placeholder="e.g. Production Key Pool A">
+            </div>
+
+            <div class="form-group">
+                <label>Paste Gemini API Keys (Single or Bulk Line-by-Line)</label>
+                <textarea id="addKeysRaw" class="form-control mono" rows="6" placeholder="AIzaSyA123...&#10;AIzaSyB456...&#10;AIzaSyC789..."></textarea>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('addKeysModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="submitAddKeys()">+ Add Keys to Pool</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reset Quotas Modal -->
+    <div id="resetQuotasModal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-title">⚡ Reset All Key Quotas</div>
+                <button class="modal-close" onclick="closeModal('resetQuotasModal')">&times;</button>
+            </div>
+            <div style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.5;">
+                This will immediately clear <strong>Quota Reached (429)</strong> error flags for all Gemini keys in your pool, restoring them to active status.
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('resetQuotasModal')">Cancel</button>
+                <button class="btn btn-warning" onclick="submitResetQuotas()">⚡ Reset All Quotas Now</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div id="toastContainer"></div>
+
     <script>
         let adminToken = localStorage.getItem('km_admin_token') || '';
+        let allUsersData = [];
+        let allInstancesData = [];
+        let allKeysData = [];
 
         // Check URL parameters for OAuth redirect responses
         const urlParams = new URLSearchParams(window.location.search);
@@ -454,10 +1027,7 @@
 
         window.addEventListener('DOMContentLoaded', () => {
             if (authErrorParam) {
-                const errorDiv = document.getElementById('authError');
-                if (errorDiv) {
-                    errorDiv.innerHTML = `<div style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); padding: 10px; border-radius: 8px;">${decodeURIComponent(authErrorParam)}</div>`;
-                }
+                showToast(decodeURIComponent(authErrorParam), 'error');
                 window.history.replaceState({}, document.title, window.location.pathname);
             }
         });
@@ -466,26 +1036,64 @@
             loadDashboard();
         }
 
+        /* ── Toast Notification Function ── */
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            if (!container) return;
+
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : '⚠️';
+            toast.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
+            
+            container.appendChild(toast);
+            setTimeout(() => toast.classList.add('show'), 10);
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        /* ── Custom Modal Helpers ── */
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) modal.classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) modal.classList.remove('active');
+        }
+
+        /* ── Tab Switcher ── */
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
+
+            const targetTab = document.getElementById(tabId);
+            if (targetTab) targetTab.classList.remove('hidden');
+
+            event.currentTarget.classList.add('active');
+        }
+
+        /* ── Login Action ── */
         async function loginAdmin() {
             const emailInput = document.getElementById('adminEmail');
             const passwordInput = document.getElementById('adminPassword');
             const loginBtn = document.getElementById('loginBtn');
-            const errorDiv = document.getElementById('authError');
             
             const email = emailInput ? emailInput.value.trim() : '';
             const password = passwordInput ? passwordInput.value.trim() : '';
-            
-            errorDiv.innerHTML = '';
 
             if (!email || !password) {
-                errorDiv.innerHTML = '<div style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); padding: 10px; border-radius: 8px;">Please enter both admin email and password.</div>';
+                showToast('Please enter both admin email and password.', 'error');
                 return;
             }
 
-            // Show Loading State
             if (loginBtn) {
                 loginBtn.disabled = true;
-                loginBtn.innerHTML = '⚡ Verifying Credentials...';
+                loginBtn.innerHTML = '⚡ Verifying...';
             }
 
             try {
@@ -499,35 +1107,24 @@
                     if (data.user.role === 'admin') {
                         adminToken = data.token;
                         localStorage.setItem('km_admin_token', adminToken);
-                        if (loginBtn) loginBtn.innerHTML = '✓ Access Granted! Loading...';
+                        showToast('Access Granted! Loading Console...', 'success');
                         await loadDashboard();
                     } else {
-                        errorDiv.innerHTML = '<div style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); padding: 10px; border-radius: 8px;">Access denied. Account does not have administrator privileges.</div>';
-                        if (loginBtn) {
-                            loginBtn.disabled = false;
-                            loginBtn.innerHTML = 'Sign In to Dashboard';
-                        }
+                        showToast('Access denied: Account lacks admin privileges.', 'error');
+                        if (loginBtn) { loginBtn.disabled = false; loginBtn.innerHTML = 'Sign In to Console'; }
                     }
                 } else {
-                    errorDiv.innerHTML = `<div style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); padding: 10px; border-radius: 8px;">${data.error || 'Admin login failed.'}</div>`;
-                    if (loginBtn) {
-                        loginBtn.disabled = false;
-                        loginBtn.innerHTML = 'Sign In to Dashboard';
-                    }
+                    showToast(data.error || 'Admin login failed.', 'error');
+                    if (loginBtn) { loginBtn.disabled = false; loginBtn.innerHTML = 'Sign In to Console'; }
                 }
             } catch (err) {
-                errorDiv.innerHTML = '<div style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); padding: 10px; border-radius: 8px;">Server connection error. Please try again.</div>';
-                if (loginBtn) {
-                    loginBtn.disabled = false;
-                    loginBtn.innerHTML = 'Sign In to Dashboard';
-                }
+                showToast('Server connection error. Please try again.', 'error');
+                if (loginBtn) { loginBtn.disabled = false; loginBtn.innerHTML = 'Sign In to Console'; }
             }
         }
 
         async function handleGoogleAdminCallback(response) {
-            const errorDiv = document.getElementById('authError');
-            errorDiv.innerHTML = '<div style="color: var(--dark-pink); text-align: center;">⚡ Verifying Google OAuth Token...</div>';
-
+            showToast('⚡ Verifying Google OAuth Token...', 'info');
             try {
                 const res = await fetch('/api/auth/google', {
                     method: 'POST',
@@ -540,12 +1137,12 @@
                     localStorage.setItem('km_admin_token', adminToken);
                     await loadDashboard();
                 } else if (data.success) {
-                    errorDiv.innerHTML = '<div style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); padding: 10px; border-radius: 8px;">Google authentication successful, but this Google account is not configured with administrator privileges.</div>';
+                    showToast('Google auth success, but account lacks admin role.', 'error');
                 } else {
-                    errorDiv.innerHTML = `<div style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); padding: 10px; border-radius: 8px;">${data.error || 'Google login failed.'}</div>`;
+                    showToast(data.error || 'Google login failed.', 'error');
                 }
             } catch (err) {
-                errorDiv.innerHTML = '<div style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); padding: 10px; border-radius: 8px;">Network error during Google authentication.</div>';
+                showToast('Network error during Google auth.', 'error');
             }
         }
 
@@ -566,7 +1163,7 @@
                         size: 'large',
                         text: 'continue_with',
                         shape: 'pill',
-                        width: 320
+                        width: 340
                     });
                 }
             } else {
@@ -580,6 +1177,7 @@
             location.reload();
         }
 
+        /* ── Load Main Dashboard Data ── */
         async function loadDashboard() {
             try {
                 const res = await fetch('/api/admin/users', {
@@ -588,95 +1186,118 @@
                 const data = await res.json();
 
                 if (!data.success) {
-                    const errorDiv = document.getElementById('authError');
-                    if (errorDiv) {
-                        errorDiv.innerHTML = `<div style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); padding: 10px; border-radius: 8px;">Session error: ${data.error || 'Please login again.'}</div>`;
-                    }
+                    showToast(data.error || 'Session expired. Please login.', 'error');
                     localStorage.removeItem('km_admin_token');
                     adminToken = '';
                     document.getElementById('authView').classList.remove('hidden');
                     document.getElementById('dashView').classList.add('hidden');
                     document.getElementById('logoutBtn').classList.add('hidden');
-                    const loginBtn = document.getElementById('loginBtn');
-                    if (loginBtn) {
-                        loginBtn.disabled = false;
-                        loginBtn.innerHTML = 'Sign In to Dashboard';
-                    }
                     return;
                 }
 
-                // Show Dashboard View
                 document.getElementById('authView').classList.add('hidden');
                 document.getElementById('dashView').classList.remove('hidden');
                 document.getElementById('logoutBtn').classList.remove('hidden');
 
-                const users = data.users || [];
-                const instances = data.instances || [];
+                allUsersData = data.users || [];
+                allInstancesData = data.instances || [];
                 const pricing = data.pricing || {};
 
                 // Update Stats
-                document.getElementById('statUsers').innerText = users.length;
-                document.getElementById('statInstances').innerText = instances.filter(i => i.status === 'active').length;
-                document.getElementById('statPaid').innerText = users.filter(u => u.plan !== 'free').length;
-                document.getElementById('statBanned').innerText = users.filter(u => u.isBanned).length;
+                document.getElementById('statUsers').innerText = allUsersData.length;
+                document.getElementById('statInstances').innerText = allInstancesData.filter(i => i.status === 'active').length;
+                document.getElementById('statPaid').innerText = allUsersData.filter(u => u.plan !== 'free').length;
+                document.getElementById('tabCountUsers').innerText = allUsersData.length;
+                document.getElementById('tabCountInstances').innerText = allInstancesData.length;
 
-                // Update Pricing
+                // Pricing
                 if (document.getElementById('weeklyPrice')) document.getElementById('weeklyPrice').value = pricing.weeklyPriceUsd || 9.99;
                 if (document.getElementById('monthlyPrice')) document.getElementById('monthlyPrice').value = pricing.monthlyPriceUsd || 29.99;
                 if (document.getElementById('serverApiKey')) document.getElementById('serverApiKey').value = pricing.serverGeminiApiKey || '';
                 if (document.getElementById('downloadUrl')) document.getElementById('downloadUrl').value = pricing.downloadUrl || '';
                 if (document.getElementById('latestVersion')) document.getElementById('latestVersion').value = pricing.latestVersion || '0.8.0';
 
-                // Render Users Table
-                const uTbody = document.querySelector('#usersTable tbody');
-                if (uTbody) {
-                    uTbody.innerHTML = users.map(u => `
-                        <tr>
-                            <td>${u.email}</td>
-                            <td><span class="badge ${u.plan === 'free' ? 'badge-warning' : 'badge-primary'}">${u.plan}</span></td>
-                            <td><span class="badge ${u.isBanned ? 'badge-danger' : 'badge-success'}">${u.isBanned ? 'Banned' : 'Active'}</span></td>
-                            <td>${u.cloudApiAccess ? '✅ Enabled' : '❌ Disabled'}</td>
-                            <td>${u.createdIp || '-'}</td>
-                            <td>${u.lastIp || '-'}</td>
-                            <td>
-                                <button class="btn btn-sm ${u.isBanned ? 'btn-success' : 'btn-danger'}" onclick="toggleBan('${u._id}', ${!u.isBanned})">
-                                    ${u.isBanned ? 'Unban' : 'Ban User'}
-                                </button>
-                                <button class="btn btn-sm btn-warning" onclick="promptPlan('${u._id}', '${u.plan}')">Change Plan</button>
-                            </td>
-                        </tr>
-                    `).join('');
-                }
+                renderUsersTable(allUsersData);
+                renderInstancesTable(allInstancesData);
 
-                // Render Instances Table
-                const iTbody = document.querySelector('#instancesTable tbody');
-                if (iTbody) {
-                    iTbody.innerHTML = instances.map(i => `
-                        <tr>
-                            <td>${i.userId?.email || 'Unknown'}</td>
-                            <td><code>${i.deviceId}</code></td>
-                            <td>${i.platform}</td>
-                            <td>${i.ipAddress || '-'}</td>
-                            <td>${i.lastHeartbeat ? new Date(i.lastHeartbeat).toLocaleString() : '-'}</td>
-                            <td><span class="badge ${i.status === 'active' ? 'badge-success' : 'badge-danger'}">${i.status}</span></td>
-                            <td>
-                                ${i.status === 'active' ? `<button class="btn btn-sm btn-danger" onclick="killInstance('${i._id}')">Kill Remote App</button>` : 'Disabled'}
-                            </td>
-                        </tr>
-                    `).join('');
-                }
-
-                // Load Gemini Key Pool
                 await loadKeyPool();
             } catch (err) {
                 console.error('Error loading dashboard:', err);
-                const errorDiv = document.getElementById('authError');
-                if (errorDiv) {
-                    errorDiv.innerHTML = '<div style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); padding: 10px; border-radius: 8px;">Network or database connection error while loading dashboard.</div>';
-                }
+                showToast('Database or connection error loading console.', 'error');
             }
         }
 
+        /* ── Render Users Table ── */
+        function renderUsersTable(users) {
+            const tbody = document.querySelector('#usersTable tbody');
+            if (!tbody) return;
+
+            if (users.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">No user accounts found matching filter criteria.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = users.map(u => {
+                const planBadge = u.plan === 'pro' || u.role === 'admin' ? 'badge-primary' : u.plan === 'free' ? 'badge-warning' : 'badge-purple';
+                const statusBadge = u.isBanned ? 'badge-danger' : 'badge-success';
+                return `
+                    <tr>
+                        <td><strong>${u.email}</strong> ${u.role === 'admin' ? '<span class="badge badge-primary" style="margin-left: 4px;">Admin</span>' : ''}</td>
+                        <td><span class="badge ${planBadge}">${u.plan}</span></td>
+                        <td><span class="badge ${statusBadge}">${u.isBanned ? 'Banned' : 'Active'}</span></td>
+                        <td>${u.cloudApiAccess ? '✅ Enabled' : '❌ Disabled'}</td>
+                        <td><code class="mono">${u.createdIp || '-'}</code></td>
+                        <td><code class="mono">${u.lastIp || '-'}</code></td>
+                        <td>
+                            <button class="btn btn-sm btn-secondary" onclick="openPlanModal('${u._id}', '${u.email}', '${u.plan}', ${u.cloudApiAccess})">Edit Plan</button>
+                            <button class="btn btn-sm ${u.isBanned ? 'btn-success' : 'btn-danger'}" onclick="openBanModal('${u._id}', '${u.email}', ${!u.isBanned})">
+                                ${u.isBanned ? 'Unban' : 'Ban User'}
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function filterUsers() {
+            const query = document.getElementById('userSearch').value.toLowerCase().trim();
+            const planFilter = document.getElementById('userPlanFilter').value;
+
+            const filtered = allUsersData.filter(u => {
+                const matchQuery = !query || u.email.toLowerCase().includes(query) || (u.lastIp && u.lastIp.includes(query)) || (u.createdIp && u.createdIp.includes(query));
+                const matchPlan = planFilter === 'all' || (planFilter === 'pro' ? (u.plan === 'pro' || u.role === 'admin') : u.plan === planFilter);
+                return matchQuery && matchPlan;
+            });
+
+            renderUsersTable(filtered);
+        }
+
+        /* ── Render Devices Table ── */
+        function renderInstancesTable(instances) {
+            const tbody = document.querySelector('#instancesTable tbody');
+            if (!tbody) return;
+
+            if (instances.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">No active running desktop instances recorded.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = instances.map(i => `
+                <tr>
+                    <td><strong>${i.userId?.email || 'Unknown User'}</strong></td>
+                    <td><code class="mono" style="background: rgba(0,0,0,0.05); padding: 2px 6px; border-radius: 4px;">${i.deviceId}</code></td>
+                    <td><span class="badge badge-muted">${i.platform}</span></td>
+                    <td><code class="mono">${i.ipAddress || '-'}</code></td>
+                    <td>${i.lastHeartbeat ? new Date(i.lastHeartbeat).toLocaleString() : '-'}</td>
+                    <td><span class="badge ${i.status === 'active' ? 'badge-success' : 'badge-danger'}">${i.status}</span></td>
+                    <td>
+                        ${i.status === 'active' ? `<button class="btn btn-sm btn-danger" onclick="killInstance('${i._id}')">Remote Kill</button>` : '<span class="badge badge-muted">Terminated</span>'}
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        /* ── Key Pool Management ── */
         async function loadKeyPool() {
             try {
                 const res = await fetch('/api/admin/keys', {
@@ -685,17 +1306,19 @@
                 const data = await res.json();
                 if (!data.success) return;
 
-                const keys = data.keys || [];
+                allKeysData = data.keys || [];
                 const stats = data.stats || { active: 0 };
+                
                 if (document.getElementById('statKeys')) document.getElementById('statKeys').innerText = stats.active;
+                if (document.getElementById('tabCountKeys')) document.getElementById('tabCountKeys').innerText = allKeysData.length;
 
-                const kTbody = document.querySelector('#keysTable tbody');
-                if (kTbody) {
-                    if (keys.length === 0) {
-                        kTbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--muted); padding: 1.5rem;">No Gemini API keys in pool yet. Add keys above!</td></tr>';
+                const tbody = document.querySelector('#keysTable tbody');
+                if (tbody) {
+                    if (allKeysData.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">No Gemini API keys in pool yet. Click "+ Add Keys" to populate your pool!</td></tr>';
                         return;
                     }
-                    kTbody.innerHTML = keys.map(k => {
+                    tbody.innerHTML = allKeysData.map(k => {
                         let statusBadge = '<span class="badge badge-success">Active</span>';
                         if (!k.isActive) {
                             statusBadge = '<span class="badge badge-danger">Disabled</span>';
@@ -707,13 +1330,13 @@
                         return `
                             <tr>
                                 <td><strong>${k.label || 'Gemini Key'}</strong></td>
-                                <td><code style="background: rgba(0,0,0,0.05); padding: 2px 6px; border-radius: 4px;">${maskedKey}</code></td>
+                                <td><code class="mono" style="background: rgba(0,0,0,0.05); padding: 3px 8px; border-radius: 4px;">${maskedKey}</code></td>
                                 <td>${statusBadge}</td>
-                                <td>${k.usageCount || 0}</td>
+                                <td><strong>${k.usageCount || 0}</strong></td>
                                 <td>${k.lastUsedAt ? new Date(k.lastUsedAt).toLocaleString() : 'Never'}</td>
-                                <td><span style="font-size: 0.8rem; color: var(--muted);">${exhaustedModels}</span></td>
+                                <td><span style="font-size: 0.8rem; color: var(--text-muted);">${exhaustedModels}</span></td>
                                 <td>
-                                    <button class="btn btn-sm ${k.isActive ? 'btn-warning' : 'btn-success'}" onclick="toggleKeyStatus('${k._id}', ${!k.isActive})">
+                                    <button class="btn btn-sm ${k.isActive ? 'btn-secondary' : 'btn-success'}" onclick="toggleKeyStatus('${k._id}', ${!k.isActive})">
                                         ${k.isActive ? 'Disable' : 'Enable'}
                                     </button>
                                     <button class="btn btn-sm btn-danger" onclick="deleteKeyFromPool('${k._id}', '${k.label}')">Delete</button>
@@ -727,11 +1350,100 @@
             }
         }
 
-        async function addKeysToPool() {
-            const rawKeys = document.getElementById('newRawKeys').value.trim();
-            const label = document.getElementById('newKeyLabel').value.trim();
+        /* ── Modal Dialog Operations ── */
+        function openPlanModal(userId, email, currentPlan, cloudAccess) {
+            document.getElementById('planModalUserId').value = userId;
+            document.getElementById('planModalUserEmail').innerText = email;
+            document.getElementById('planModalSelect').value = currentPlan || 'free';
+            document.getElementById('planModalCloudAccess').checked = !!cloudAccess;
+            openModal('planModal');
+        }
+
+        async function submitUserPlan() {
+            const userId = document.getElementById('planModalUserId').value;
+            const plan = document.getElementById('planModalSelect').value;
+            const durationDays = parseInt(document.getElementById('planModalDays').value) || 30;
+            const cloudApiAccess = document.getElementById('planModalCloudAccess').checked;
+
+            try {
+                const res = await fetch('/api/admin/update-plan', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
+                    body: JSON.stringify({ userId, plan, durationDays, cloudApiAccess })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast(`Updated plan to ${plan.toUpperCase()}`, 'success');
+                    closeModal('planModal');
+                    loadDashboard();
+                } else {
+                    showToast(data.error || 'Failed to update plan', 'error');
+                }
+            } catch (err) {
+                showToast('Network error updating plan.', 'error');
+            }
+        }
+
+        function openBanModal(userId, email, isBanned) {
+            document.getElementById('banModalUserId').value = userId;
+            document.getElementById('banModalUserEmail').innerText = email;
+            document.getElementById('banModalStatus').value = isBanned ? 'true' : 'false';
+            
+            document.getElementById('banModalTitle').innerText = isBanned ? 'Ban User Account' : 'Unban User Account';
+            document.getElementById('banModalConfirmBtn').innerText = isBanned ? 'Confirm Ban User' : 'Confirm Unban User';
+            
+            const reasonGroup = document.getElementById('banReasonGroup');
+            if (isBanned) {
+                reasonGroup.classList.remove('hidden');
+            } else {
+                reasonGroup.classList.add('hidden');
+            }
+            openModal('banModal');
+        }
+
+        function checkCustomBanReason(val) {
+            const customInput = document.getElementById('banReasonCustom');
+            if (val === 'custom') {
+                customInput.classList.remove('hidden');
+            } else {
+                customInput.classList.add('hidden');
+            }
+        }
+
+        async function submitUserBan() {
+            const userId = document.getElementById('banModalUserId').value;
+            const isBanned = document.getElementById('banModalStatus').value === 'true';
+            
+            let banReason = document.getElementById('banReasonSelect').value;
+            if (banReason === 'custom') {
+                banReason = document.getElementById('banReasonCustom').value.trim() || 'Banned by Administrator.';
+            }
+
+            try {
+                const res = await fetch('/api/admin/ban', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
+                    body: JSON.stringify({ userId, isBanned, banReason })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast(data.message, 'success');
+                    closeModal('banModal');
+                    loadDashboard();
+                } else {
+                    showToast(data.error || 'Failed to update ban status', 'error');
+                }
+            } catch (err) {
+                showToast('Network error updating ban status.', 'error');
+            }
+        }
+
+        async function submitAddKeys() {
+            const rawKeys = document.getElementById('addKeysRaw').value.trim();
+            const label = document.getElementById('addKeysLabel').value.trim();
+
             if (!rawKeys) {
-                alert('Please paste at least one Gemini API key.');
+                showToast('Please paste at least one API key.', 'error');
                 return;
             }
 
@@ -743,80 +1455,83 @@
                 });
                 const data = await res.json();
                 if (data.success) {
-                    document.getElementById('newRawKeys').value = '';
-                    document.getElementById('newKeyLabel').value = '';
-                    alert(data.message);
+                    document.getElementById('addKeysRaw').value = '';
+                    document.getElementById('addKeysLabel').value = '';
+                    showToast(data.message, 'success');
+                    closeModal('addKeysModal');
                     loadKeyPool();
                 } else {
-                    alert('Error: ' + (data.error || 'Failed to add keys.'));
+                    showToast(data.error || 'Failed to add keys', 'error');
                 }
             } catch (err) {
-                alert('Network error adding keys.');
+                showToast('Network error adding keys.', 'error');
+            }
+        }
+
+        async function submitResetQuotas() {
+            try {
+                const res = await fetch('/api/admin/keys/reset-quotas', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast(data.message || 'Key quotas reset successfully!', 'success');
+                    closeModal('resetQuotasModal');
+                    loadKeyPool();
+                } else {
+                    showToast(data.error || 'Failed to reset quotas', 'error');
+                }
+            } catch (err) {
+                showToast('Network error resetting quotas.', 'error');
             }
         }
 
         async function toggleKeyStatus(keyId, isActive) {
-            await fetch('/api/admin/keys/toggle-status', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
-                body: JSON.stringify({ keyId, isActive })
-            });
-            loadKeyPool();
+            try {
+                await fetch('/api/admin/keys/toggle-status', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
+                    body: JSON.stringify({ keyId, isActive })
+                });
+                showToast(`Key is now ${isActive ? 'Active' : 'Disabled'}`, 'info');
+                loadKeyPool();
+            } catch (err) {
+                showToast('Error toggling key status.', 'error');
+            }
         }
 
         async function deleteKeyFromPool(keyId, label) {
-            if (!confirm(`Delete key "${label}" from pool?`)) return;
-            await fetch(`/api/admin/keys/${keyId}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${adminToken}` }
-            });
-            loadKeyPool();
-        }
-
-        async function resetAllKeyQuotas() {
-            if (!confirm('Reset quota limit status for all keys in the pool?')) return;
-            const res = await fetch('/api/admin/keys/reset-quotas', {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${adminToken}` }
-            });
-            const data = await res.json();
-            alert(data.message || 'Quotas reset successfully!');
-            loadKeyPool();
-        }
-
-        async function toggleBan(userId, isBanned) {
-            const reason = isBanned ? prompt('Enter reason for ban:', 'Violation of Terms & Conditions') : '';
-            if (isBanned && reason === null) return;
-
-            await fetch('/api/admin/ban', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
-                body: JSON.stringify({ userId, isBanned, banReason: reason })
-            });
-            loadDashboard();
-        }
-
-        async function promptPlan(userId, currentPlan) {
-            const newPlan = prompt('Enter new plan (free, weekly, monthly):', currentPlan);
-            if (!newPlan) return;
-            const enableCloud = confirm('Enable Server Cloud API Access for this user?');
-
-            await fetch('/api/admin/update-plan', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
-                body: JSON.stringify({ userId, plan: newPlan, cloudApiAccess: enableCloud })
-            });
-            loadDashboard();
+            try {
+                const res = await fetch(`/api/admin/keys/${keyId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast(`Removed "${label}" from pool`, 'success');
+                    loadKeyPool();
+                }
+            } catch (err) {
+                showToast('Error deleting key.', 'error');
+            }
         }
 
         async function killInstance(instanceId) {
-            if (!confirm('Remotely terminate this running application instance?')) return;
-            await fetch('/api/admin/kill-instance', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
-                body: JSON.stringify({ instanceId })
-            });
-            loadDashboard();
+            try {
+                const res = await fetch('/api/admin/kill-instance', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
+                    body: JSON.stringify({ instanceId })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('Remote instance terminated', 'success');
+                    loadDashboard();
+                }
+            } catch (err) {
+                showToast('Error killing instance.', 'error');
+            }
         }
 
         async function savePricing() {
@@ -826,13 +1541,22 @@
             const downloadUrl = document.getElementById('downloadUrl').value;
             const latestVersion = document.getElementById('latestVersion').value;
 
-            await fetch('/api/admin/pricing', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
-                body: JSON.stringify({ weeklyPriceUsd, monthlyPriceUsd, serverGeminiApiKey, downloadUrl, latestVersion })
-            });
-            alert('Settings updated successfully!');
-            loadDashboard();
+            try {
+                const res = await fetch('/api/admin/pricing', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
+                    body: JSON.stringify({ weeklyPriceUsd, monthlyPriceUsd, serverGeminiApiKey, downloadUrl, latestVersion })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('Settings saved successfully!', 'success');
+                    loadDashboard();
+                } else {
+                    showToast(data.error || 'Failed to save settings', 'error');
+                }
+            } catch (err) {
+                showToast('Network error saving settings.', 'error');
+            }
         }
     </script>
 </body>
