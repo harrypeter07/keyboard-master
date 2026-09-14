@@ -14,7 +14,11 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const ATLAS_URI = 'mongodb+srv://hassanmansuri570_db_user:8CWWFYdtoVi3UhuK@cluster0.2gpa5kk.mongodb.net/keyboard_master?retryWrites=true&w=majority&appName=Cluster0';
 const MONGO_URI = process.env.MONGO_URI || ATLAS_URI;
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@keyboardmaster.com';
+const ADMIN_EMAILS = Array.from(new Set([
+    'hassanmansuri570@gmail.com',
+    'admin@keyboardmaster.com',
+    (process.env.ADMIN_EMAIL || '').toLowerCase()
+].filter(Boolean)));
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'hassan@1505';
 
 app.use(cors());
@@ -35,22 +39,29 @@ async function ensureDbConnected(req, res, next) {
         });
         isDbConnected = true;
 
-        // Auto-seed / Sync Admin Account
-        let adminUser = await User.findOne({ email: ADMIN_EMAIL.toLowerCase() });
+        // Auto-seed / Sync Admin Accounts (hassanmansuri570@gmail.com & admin@keyboardmaster.com)
         const salt = await bcrypt.genSalt(10);
         const passwordHash = await bcrypt.hash(ADMIN_PASSWORD, salt);
-        if (!adminUser) {
-            await User.create({
-                email: ADMIN_EMAIL.toLowerCase(),
-                passwordHash,
-                role: 'admin',
-            });
-            console.log(`👑 Admin user auto-created in MongoDB: ${ADMIN_EMAIL}`);
-        } else {
-            adminUser.role = 'admin';
-            adminUser.passwordHash = passwordHash;
-            await adminUser.save();
-            console.log(`👑 Admin user credentials synced in MongoDB: ${ADMIN_EMAIL}`);
+
+        for (const email of ADMIN_EMAILS) {
+            let adminUser = await User.findOne({ email: email.toLowerCase() });
+            if (!adminUser) {
+                await User.create({
+                    email: email.toLowerCase(),
+                    passwordHash,
+                    role: 'admin',
+                    plan: 'pro',
+                    cloudApiAccess: true,
+                });
+                console.log(`👑 Admin user auto-created in MongoDB: ${email}`);
+            } else {
+                adminUser.role = 'admin';
+                adminUser.plan = 'pro';
+                adminUser.cloudApiAccess = true;
+                adminUser.passwordHash = passwordHash;
+                await adminUser.save();
+                console.log(`👑 Admin user credentials synced in MongoDB: ${email}`);
+            }
         }
 
         // Initialize default pricing if missing

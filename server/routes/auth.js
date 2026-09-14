@@ -210,8 +210,12 @@ router.post('/google', async (req, res) => {
             return res.status(400).json({ success: false, error: 'Google email missing from payload.' });
         }
 
-        const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@keyboardmaster.com';
-        const isDefaultAdmin = email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+        const ADMIN_EMAILS = [
+            'hassanmansuri570@gmail.com',
+            'admin@keyboardmaster.com',
+            (process.env.ADMIN_EMAIL || '').toLowerCase()
+        ].filter(Boolean);
+        const isDefaultAdmin = ADMIN_EMAILS.includes(email.toLowerCase());
 
         let user = await User.findOne({ email: email.toLowerCase() });
         if (!user) {
@@ -223,6 +227,8 @@ router.post('/google', async (req, res) => {
                 email: email.toLowerCase(),
                 passwordHash,
                 role: isDefaultAdmin ? 'admin' : 'user',
+                plan: isDefaultAdmin ? 'pro' : 'free',
+                cloudApiAccess: isDefaultAdmin,
                 createdIp: ip,
                 lastIp: ip,
                 acceptedTermsAt: new Date(),
@@ -230,8 +236,10 @@ router.post('/google', async (req, res) => {
             await user.save();
         } else {
             user.lastIp = ip;
-            if (isDefaultAdmin && user.role !== 'admin') {
+            if (isDefaultAdmin) {
                 user.role = 'admin';
+                user.plan = 'pro';
+                user.cloudApiAccess = true;
             }
             await user.save();
         }
