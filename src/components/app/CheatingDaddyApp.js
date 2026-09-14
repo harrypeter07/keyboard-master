@@ -238,25 +238,47 @@ export class CheatingDaddyApp extends LitElement {
         /* ── MCQ Blinking Target Pulse Dot Overlay ── */
         .mcq-target-dot {
             position: fixed;
-            width: 14px;
-            height: 14px;
+            width: 18px;
+            height: 18px;
             border-radius: 50%;
             background: #00f2fe;
-            box-shadow: 0 0 12px #00f2fe, 0 0 25px #e100ff, 0 0 40px #00f2fe;
+            box-shadow: 0 0 14px #00f2fe, 0 0 28px #e100ff, 0 0 45px #00f2fe;
             border: 2px solid #ffffff;
             z-index: 99999;
             pointer-events: none;
-            animation: mcq-pulse 0.7s ease-in-out infinite alternate;
+            animation: mcq-pulse 0.75s ease-in-out infinite alternate;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: translate(-50%, -50%);
+        }
+
+        .mcq-target-badge {
+            position: absolute;
+            left: 22px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(15, 23, 42, 0.92);
+            color: #00f2fe;
+            border: 1px solid #00f2fe;
+            padding: 2px 7px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 800;
+            white-space: nowrap;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.6);
+            font-family: var(--font-mono, monospace);
+            pointer-events: none;
         }
 
         @keyframes mcq-pulse {
             0% {
-                transform: scale(0.9);
-                opacity: 0.7;
+                transform: translate(-50%, -50%) scale(0.95);
+                opacity: 0.75;
                 box-shadow: 0 0 10px #00f2fe, 0 0 20px #e100ff;
             }
             100% {
-                transform: scale(1.6);
+                transform: translate(-50%, -50%) scale(1.55);
                 opacity: 1;
                 box-shadow: 0 0 30px #00f2fe, 0 0 50px #e100ff, 0 0 70px #00f2fe;
             }
@@ -519,8 +541,11 @@ export class CheatingDaddyApp extends LitElement {
             ipcRenderer.on('screen-analysis-loading', (_, isLoading) => {
                 this.setScreenAnalysisLoading(isLoading);
             });
+            ipcRenderer.on('trigger-mcq-blink-targets', (_, data) => {
+                this._showMcqBlinkTargets(data);
+            });
             ipcRenderer.on('trigger-mcq-blink-target', (_, data) => {
-                this._showMcqBlinkTarget(data);
+                this._showMcqBlinkTargets({ targets: [{ option: data?.option || 'A', top: data?.percentY || 50, left: 28 }] });
             });
             ipcRenderer.on('update-available', (_, info) => {
                 this._updateAvailable = true;
@@ -554,20 +579,24 @@ export class CheatingDaddyApp extends LitElement {
         }
     }
 
-    _showMcqBlinkTarget(data) {
-        const { option, percentY } = data || {};
-        this.mcqBlinkTarget = {
-            option: option || 'A',
-            top: percentY || 50,
-            left: 28,
-        };
+    _showMcqBlinkTargets(data) {
+        const targets = data?.targets || [];
+        if (targets.length === 0 && data?.option) {
+            targets.push({ option: data.option, top: data.percentY || 50, left: 28 });
+        }
+
+        this.mcqBlinkTargets = targets;
+        if (targets.length > 0) {
+            this.mcqBlinkTarget = targets[0];
+        }
         this.requestUpdate();
 
         clearTimeout(this._mcqBlinkTimeout);
         this._mcqBlinkTimeout = setTimeout(() => {
+            this.mcqBlinkTargets = [];
             this.mcqBlinkTarget = null;
             this.requestUpdate();
-        }, 4500);
+        }, 10000);
     }
 
     disconnectedCallback() {
@@ -1097,12 +1126,22 @@ export class CheatingDaddyApp extends LitElement {
                     <div class="content-inner ${isLive ? 'live' : ''}">${this.renderCurrentView()}</div>
                 </div>
             </div>
-            ${this.mcqBlinkTarget ? html`
+            ${(this.mcqBlinkTargets && this.mcqBlinkTargets.length > 0) ? this.mcqBlinkTargets.map(target => html`
                 <div
                     class="mcq-target-dot"
-                    style="top: ${this.mcqBlinkTarget.top}%; left: ${this.mcqBlinkTarget.left}%;"
+                    style="top: ${target.top}%; left: ${target.left || 28}%;"
+                    title="${target.q ? `${target.q}: ` : ''}Option ${target.option}"
+                >
+                    <span class="mcq-target-badge">${target.q ? `${target.q}: ` : ''}${target.option}</span>
+                </div>
+            `) : this.mcqBlinkTarget ? html`
+                <div
+                    class="mcq-target-dot"
+                    style="top: ${this.mcqBlinkTarget.top}%; left: ${this.mcqBlinkTarget.left || 28}%;"
                     title="MCQ Option ${this.mcqBlinkTarget.option}"
-                ></div>
+                >
+                    <span class="mcq-target-badge">${this.mcqBlinkTarget.option}</span>
+                </div>
             ` : ''}
         `;
     }
