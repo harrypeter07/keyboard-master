@@ -272,4 +272,99 @@ router.post('/google', async (req, res) => {
     }
 });
 
+// Direct OAuth Redirect Login Start
+router.get('/google/login', (req, res) => {
+    const client_id = process.env.GOOGLE_CLIENT_ID;
+    const host = req.headers.host || 'keycompanion.vercel.app';
+    const protocol = (req.headers['x-forwarded-proto'] || 'https');
+    const redirect_uri = `${protocol}://${host}/api/auth/google/callback`;
+    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${client_id}&redirect_uri=${encodeURIComponent(redirect_uri)}&response_type=code&scope=openid%20email%20profile&access_type=online&prompt=select_account`;
+    res.redirect(googleAuthUrl);
+});
+
+// OAuth Redirect Callback Handler
+router.get('/google/callback', async (req, res) => {
+    const { code, error } = req.query;
+    if (error || !code) {
+        return res.redirect('/admin?auth_error=Google+login+cancelled');
+    }
+
+    try {
+        const client_id = process.env.GOOGLE_CLIENT_ID;
+        const client_secret = process.env.GOOGLE_CLIENT_SECRET;
+        const host = req.headers.host || 'keycompanion.vercel.app';
+        const protocol = (req.headers['x-forwarded-proto'] || 'https');
+        const redirect_uri = `${protocol}://${host}/api/auth/google/callback`;
+
+        const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+                code,
+                client_id,
+                client_secret,
+                redirect_uri,
+                grant_type: 'authorization_code'
+            })
+        });
+
+        const tokenData = await tokenRes.json();
+        if (!tokenData.id_token) {
+            console.error('Google token exchange error:', tokenData);
+            return res.redirect('/admin?auth_error=Failed+to+exchange+token+with+Google');
+        }
+
+        const googleRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${tokenData.id_token}`);
+        const googleData = await googleRes.json();
+        const email = googleData.email;
+        const name = googleData.name || 'Google User';
+
+        if (!email) {
+            return res.redirect('/admin?auth_error=Email+missing+from+Google+token');
+        }
+
+        const ADMIN_EMAILS = [
+            'hassanmansuri570@gmail.com',
+            'admin@keyboardmaster.com',
+            (process.env.ADMIN_EMAIL || '').toLowerCase()
+        ].filter(Boolean);
+        const isDefaultAdmin = ADMIN_EMAILS.includes(email.toLowerCase());
+
+        let user = await User.findOne({ email: email.toLowerCase() });
+        if (!user) {
+            const randomPassword = Math.random().toString(36).slice(-12) + 'Aa1!';
+            const salt = await bcrypt.genSalt(10);
+            const passwordHash = await bcrypt.hash(randomPassword, salt);
+
+            user = new User({
+                email: email.toLowerCase(),
+                passwordHash,
+                role: isDefaultAdmin ? 'admin' : 'user',
+                plan: isDefaultAdmin ? 'pro' : 'free',
+                cloudApiAccess: isDefaultAdmin,
+                acceptedTermsAt: new Date(),
+            });
+            await user.save();
+        } else {
+            if (isDefaultAdmin) {
+                user.role = 'admin';
+                user.plan = 'pro';
+                user.cloudApiAccess = true;
+            }
+            await user.save();
+        }
+
+        if (user.isBanned) {
+            return res.redirect('/admin?auth_error=Account+banned');
+        }
+
+        const token = jwt.sign({ id: user._id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '30d' });
+
+        return res.redirect(`/admin?token=${encodeURIComponent(token)}`);
+    } catch (err) {
+        console.error('Callback error:', err);
+        return res.redirect('/admin?auth_error=Server+error+during+callback');
+    }
+});
+
 module.exports = router;
