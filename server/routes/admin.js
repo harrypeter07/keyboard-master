@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const Instance = require('../models/Instance');
 const Pricing = require('../models/Pricing');
+const GeminiKey = require('../models/GeminiKey');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'keyboard_master_secret_key_2026';
 
@@ -137,6 +138,128 @@ router.post('/pricing', adminAuth, async (req, res) => {
         return res.json({ success: true, message: 'Pricing and server settings updated successfully.' });
     } catch (err) {
         return res.status(500).json({ success: false, error: 'Failed to update pricing.' });
+    }
+});
+
+// ==========================================
+// GEMINI API KEY POOL MANAGEMENT ROUTES
+// ==========================================
+
+// Get All Gemini API Keys in Pool
+router.get('/keys', adminAuth, async (req, res) => {
+    try {
+        const keys = await GeminiKey.find().sort({ createdAt: -1 });
+        const total = keys.length;
+        const active = keys.filter(k => k.isActive && !k.quotaExhausted).length;
+        const exhausted = keys.filter(k => k.quotaExhausted).length;
+        const disabled = keys.filter(k => !k.isActive).length;
+
+        return res.json({
+            success: true,
+            keys,
+            stats: { total, active, exhausted, disabled }
+        });
+    } catch (err) {
+        console.error('Error fetching key pool:', err);
+        return res.status(500).json({ success: false, error: 'Failed to fetch Gemini key pool.' });
+    }
+});
+
+// Add Single or Bulk Gemini API Keys
+router.post('/keys', adminAuth, async (req, res) => {
+    try {
+        const { rawKeys, label } = req.body;
+        if (!rawKeys || typeof rawKeys !== 'string') {
+            return res.status(400).json({ success: false, error: 'No keys provided.' });
+        }
+
+        // Parse keys line-by-line or by comma/whitespace
+        const candidateKeys = rawKeys.split(/[\n,;\s]+/).map(k => k.trim()).filter(Boolean);
+        if (candidateKeys.length === 0) {
+            return res.status(400).json({ success: false, error: 'No valid key strings found.' });
+        }
+
+        let addedCount = 0;
+        let duplicateCount = 0;
+
+        for (let i = 0; i < candidateKeys.length; i++) {
+            const keyStr = candidateKeys[i];
+            const exists = await GeminiKey.findOne({ key: keyStr });
+            if (exists) {
+                duplicateCount++;
+            } else {
+                const keyLabel = candidateKeys.length > 1 ? `${label || 'Gemini Key'} #${i + 1}` : (label || 'Gemini Key');
+                await GeminiKey.create({
+                    key: keyStr,
+                    label: keyLabel,
+                    addedBy: req.user.email || 'admin'
+                });
+                addedCount++;
+            }
+        }
+
+        return res.json({
+            success: true,
+            message: `Successfully processed ${candidateKeys.length} keys: ${addedCount} added, ${duplicateCount} duplicates ignored.`,
+            addedCount,
+            duplicateCount
+        });
+    } catch (err) {
+        console.error('Error adding keys:', err);
+        return res.status(500).json({ success: false, error: 'Failed to add Gemini keys.' });
+    }
+});
+
+// Toggle Active / Disabled Status of Key
+router.post('/keys/toggle-status', adminAuth, async (req, res) => {
+    try {
+        const { keyId, isActive } = req.body;
+        const keyItem = await GeminiKey.findById(keyId);
+        if (!keyItem) {
+            return res.status(404).json({ success: false, error: 'Key not found.' });
+        }
+
+        keyItem.isActive = !!isActive;
+        await keyItem.save();
+
+        return res.json({
+            success: true,
+            message: `Key "${keyItem.label}" is now ${keyItem.isActive ? 'Active' : 'Disabled'}.`
+        });
+    } catch (err) {
+        return res.status(500).json({ success: false, error: 'Failed to toggle key status.' });
+    }
+});
+
+// Delete Key from Pool
+router.delete('/keys/:id', adminAuth, async (req, res) => {
+    try {
+        const keyId = req.params.id;
+        const deleted = await GeminiKey.findByIdAndDelete(keyId);
+        if (!deleted) {
+            return res.status(404).json({ success: false, error: 'Key not found.' });
+        }
+
+        return res.json({ success: true, message: `Key "${deleted.label}" removed from pool.` });
+    } catch (err) {
+        return res.status(500).json({ success: false, error: 'Failed to delete key.' });
+    }
+});
+
+// Reset Quota Limits for All Keys in Pool
+router.post('/keys/reset-quotas', adminAuth, async (req, res) => {
+    try {
+        const result = await GeminiKey.updateMany(
+            { quotaExhausted: true },
+            { $set: { quotaExhausted: false, exhaustedAt: null, exhaustedModels: [] } }
+        );
+
+        return res.json({
+            success: true,
+            message: `Quota limits reset for ${result.modifiedCount} keys in pool.`
+        });
+    } catch (err) {
+        return res.status(500).json({ success: false, error: 'Failed to reset key quotas.' });
     }
 });
 

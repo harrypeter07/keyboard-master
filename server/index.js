@@ -6,6 +6,7 @@ require('dotenv').config();
 
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
+const keyRoutes = require('./routes/keys');
 const User = require('./models/User');
 const Pricing = require('./models/Pricing');
 const bcrypt = require('bcryptjs');
@@ -135,6 +136,7 @@ app.get(['/api/version', '/api/health'], async (req, res) => {
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/keys', keyRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

@@ -315,6 +315,53 @@
                     <div class="stat-label">Banned Users</div>
                     <div class="stat-value" id="statBanned">0</div>
                 </div>
+                <div class="stat-card">
+                    <div class="stat-label">Active Key Pool</div>
+                    <div class="stat-value" id="statKeys">0</div>
+                </div>
+            </div>
+
+            <!-- Gemini API Key Pool Section -->
+            <div class="section-card">
+                <div class="section-header">
+                    <div>
+                        <div class="section-title">🔑 Server Gemini API Key Pool</div>
+                        <div style="font-size: 0.8rem; color: var(--muted); margin-top: 4px;">
+                            Unlimited key pool with zero-latency client caching & automatic 429 quota rotation for paid members.
+                        </div>
+                    </div>
+                    <button class="btn btn-sm btn-warning" onclick="resetAllKeyQuotas()">⚡ Reset All Quota Limits</button>
+                </div>
+
+                <!-- Add Keys Box -->
+                <div style="background: #faf6f0; padding: 1.2rem; border-radius: 12px; margin-bottom: 1.5rem; border: 1px solid var(--border);">
+                    <div style="font-weight: 600; font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--text);">Add Keys to Pool (Bulk or Single)</div>
+                    <div style="display: grid; grid-template-columns: 1fr 220px; gap: 1rem; align-items: start;">
+                        <div>
+                            <textarea id="newRawKeys" class="form-control" rows="3" placeholder="Paste Gemini API Keys here (one per line, or separated by commas)..."></textarea>
+                        </div>
+                        <div>
+                            <input type="text" id="newKeyLabel" class="form-control" placeholder="Label (e.g. Prod Key 1)" style="margin-bottom: 0.6rem;">
+                            <button class="btn btn-primary" onclick="addKeysToPool()">+ Add Keys to Pool</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Keys Pool Table -->
+                <table id="keysTable">
+                    <thead>
+                        <tr>
+                            <th>Key Label</th>
+                            <th>API Key</th>
+                            <th>Status</th>
+                            <th>Usage Count</th>
+                            <th>Last Used</th>
+                            <th>Exhausted Models</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody><!-- Dynamic Key Rows --></tbody>
+                </table>
             </div>
 
             <!-- Pricing & Cloud API Key Configuration -->
@@ -332,7 +379,7 @@
                         <input type="number" step="0.01" id="monthlyPrice" class="form-control" value="29.99">
                     </div>
                     <div class="form-group" style="grid-column: span 2;">
-                        <label>Server Cloud Gemini API Key (For Paid Members)</label>
+                        <label>Fallback Server Gemini API Key (Single Backup)</label>
                         <input type="password" id="serverApiKey" class="form-control" placeholder="AQ.Ab8RN6...">
                     </div>
                     <div class="form-group" style="grid-column: span 2;">
@@ -618,6 +665,9 @@
                         </tr>
                     `).join('');
                 }
+
+                // Load Gemini Key Pool
+                await loadKeyPool();
             } catch (err) {
                 console.error('Error loading dashboard:', err);
                 const errorDiv = document.getElementById('authError');
@@ -625,6 +675,113 @@
                     errorDiv.innerHTML = '<div style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); padding: 10px; border-radius: 8px;">Network or database connection error while loading dashboard.</div>';
                 }
             }
+        }
+
+        async function loadKeyPool() {
+            try {
+                const res = await fetch('/api/admin/keys', {
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+                const data = await res.json();
+                if (!data.success) return;
+
+                const keys = data.keys || [];
+                const stats = data.stats || { active: 0 };
+                if (document.getElementById('statKeys')) document.getElementById('statKeys').innerText = stats.active;
+
+                const kTbody = document.querySelector('#keysTable tbody');
+                if (kTbody) {
+                    if (keys.length === 0) {
+                        kTbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--muted); padding: 1.5rem;">No Gemini API keys in pool yet. Add keys above!</td></tr>';
+                        return;
+                    }
+                    kTbody.innerHTML = keys.map(k => {
+                        let statusBadge = '<span class="badge badge-success">Active</span>';
+                        if (!k.isActive) {
+                            statusBadge = '<span class="badge badge-danger">Disabled</span>';
+                        } else if (k.quotaExhausted) {
+                            statusBadge = '<span class="badge badge-warning">Quota Reached (429)</span>';
+                        }
+                        const maskedKey = k.key.length > 10 ? (k.key.substring(0, 6) + '...' + k.key.substring(k.key.length - 4)) : k.key;
+                        const exhaustedModels = (k.exhaustedModels || []).join(', ') || '-';
+                        return `
+                            <tr>
+                                <td><strong>${k.label || 'Gemini Key'}</strong></td>
+                                <td><code style="background: rgba(0,0,0,0.05); padding: 2px 6px; border-radius: 4px;">${maskedKey}</code></td>
+                                <td>${statusBadge}</td>
+                                <td>${k.usageCount || 0}</td>
+                                <td>${k.lastUsedAt ? new Date(k.lastUsedAt).toLocaleString() : 'Never'}</td>
+                                <td><span style="font-size: 0.8rem; color: var(--muted);">${exhaustedModels}</span></td>
+                                <td>
+                                    <button class="btn btn-sm ${k.isActive ? 'btn-warning' : 'btn-success'}" onclick="toggleKeyStatus('${k._id}', ${!k.isActive})">
+                                        ${k.isActive ? 'Disable' : 'Enable'}
+                                    </button>
+                                    <button class="btn btn-sm btn-danger" onclick="deleteKeyFromPool('${k._id}', '${k.label}')">Delete</button>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+            } catch (err) {
+                console.error('Error loading key pool:', err);
+            }
+        }
+
+        async function addKeysToPool() {
+            const rawKeys = document.getElementById('newRawKeys').value.trim();
+            const label = document.getElementById('newKeyLabel').value.trim();
+            if (!rawKeys) {
+                alert('Please paste at least one Gemini API key.');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/admin/keys', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
+                    body: JSON.stringify({ rawKeys, label })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('newRawKeys').value = '';
+                    document.getElementById('newKeyLabel').value = '';
+                    alert(data.message);
+                    loadKeyPool();
+                } else {
+                    alert('Error: ' + (data.error || 'Failed to add keys.'));
+                }
+            } catch (err) {
+                alert('Network error adding keys.');
+            }
+        }
+
+        async function toggleKeyStatus(keyId, isActive) {
+            await fetch('/api/admin/keys/toggle-status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
+                body: JSON.stringify({ keyId, isActive })
+            });
+            loadKeyPool();
+        }
+
+        async function deleteKeyFromPool(keyId, label) {
+            if (!confirm(`Delete key "${label}" from pool?`)) return;
+            await fetch(`/api/admin/keys/${keyId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${adminToken}` }
+            });
+            loadKeyPool();
+        }
+
+        async function resetAllKeyQuotas() {
+            if (!confirm('Reset quota limit status for all keys in the pool?')) return;
+            const res = await fetch('/api/admin/keys/reset-quotas', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${adminToken}` }
+            });
+            const data = await res.json();
+            alert(data.message || 'Quotas reset successfully!');
+            loadKeyPool();
         }
 
         async function toggleBan(userId, isBanned) {
