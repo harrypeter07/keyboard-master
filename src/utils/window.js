@@ -3,9 +3,69 @@ const path = require('node:path');
 const storage = require('../storage');
 
 let mouseEventsIgnored = false;
+let targetOverlayWindow = null;
 
 const DEFAULT_MAIN_WINDOW_SIZE = { width: 1100, height: 800 };
 const MIN_WINDOW_SIZE = { width: 700, height: 320 };
+
+function createTargetOverlayWindow() {
+    if (targetOverlayWindow && !targetOverlayWindow.isDestroyed()) {
+        return targetOverlayWindow;
+    }
+
+    try {
+        const primaryDisplay = screen.getPrimaryDisplay();
+        const { width, height } = primaryDisplay.bounds;
+
+        targetOverlayWindow = new BrowserWindow({
+            title: 'MCQ Target Overlay',
+            x: 0,
+            y: 0,
+            width: width,
+            height: height,
+            transparent: true,
+            frame: false,
+            resizable: false,
+            hasShadow: false,
+            alwaysOnTop: true,
+            skipTaskbar: true,
+            focusable: false,
+            webPreferences: {
+                nodeIntegration: true,
+                contextIsolation: false,
+                backgroundThrottling: false,
+            },
+            backgroundColor: '#00000000',
+        });
+
+        targetOverlayWindow.setContentProtection(true);
+        targetOverlayWindow.setIgnoreMouseEvents(true, { forward: true });
+
+        if (process.platform === 'win32') {
+            targetOverlayWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+            targetOverlayWindow.setAlwaysOnTop(true, 'screen-saver', 2);
+        }
+
+        targetOverlayWindow.loadFile(path.join(__dirname, '../target-overlay.html'));
+
+        targetOverlayWindow.on('show', () => {
+            try { targetOverlayWindow.setContentProtection(true); } catch (e) {}
+        });
+
+        targetOverlayWindow.on('closed', () => {
+            targetOverlayWindow = null;
+        });
+
+        return targetOverlayWindow;
+    } catch (e) {
+        console.error('Error creating target overlay window:', e);
+        return null;
+    }
+}
+
+function getTargetOverlayWindow() {
+    return createTargetOverlayWindow();
+}
 
 function createWindow(sendToRenderer, geminiSessionRef) {
     let windowWidth = DEFAULT_MAIN_WINDOW_SIZE.width;
@@ -368,10 +428,18 @@ function setupWindowIpcHandlers(mainWindow, sendToRenderer, geminiSessionRef) {
             return { success: false, error: error.message };
         }
     });
+    ipcMain.on('show-target-overlay', () => {
+        const overlay = getTargetOverlayWindow();
+        if (overlay && !overlay.isDestroyed()) {
+            overlay.showInactive();
+        }
+    });
 }
 
 module.exports = {
     createWindow,
+    createTargetOverlayWindow,
+    getTargetOverlayWindow,
     getDefaultKeybinds,
     updateGlobalShortcuts,
     setupWindowIpcHandlers,

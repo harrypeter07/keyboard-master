@@ -524,6 +524,18 @@ function extractAndEmitMcqTargets(fullText) {
             sendToRenderer('trigger-mcq-blink-targets', { targets });
             // Legacy fallback trigger
             sendToRenderer('trigger-mcq-blink-target', { option: targets[0].option, percentY: targets[0].top });
+
+            // Direct dispatch to dedicated fullscreen transparent overlay window
+            try {
+                const { getTargetOverlayWindow } = require('./window');
+                const overlayWin = getTargetOverlayWindow();
+                if (overlayWin && !overlayWin.isDestroyed()) {
+                    overlayWin.showInactive();
+                    overlayWin.webContents.send('trigger-mcq-blink-targets', { targets });
+                }
+            } catch (overlayErr) {
+                console.warn('[MCQ Target Engine] Dedicated overlay dispatch error:', overlayErr.message);
+            }
         }
     } catch (e) {
         console.warn('[MCQ Target Engine] Error checking MCQ target lights:', e.message);
