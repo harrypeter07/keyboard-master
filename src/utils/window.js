@@ -4,6 +4,19 @@ const storage = require('../storage');
 
 let mouseEventsIgnored = false;
 let targetOverlayWindow = null;
+let storedMcqAnswerText = 'No answer calculated yet. Take a screenshot (Ctrl+Enter) first.';
+
+function setStoredMcqAnswerText(text) {
+    if (text) {
+        storedMcqAnswerText = text;
+    }
+    try {
+        const overlayWin = getTargetOverlayWindow();
+        if (overlayWin && !overlayWin.isDestroyed()) {
+            overlayWin.webContents.send('store-mcq-answers', { text: storedMcqAnswerText });
+        }
+    } catch (e) {}
+}
 
 const DEFAULT_MAIN_WINDOW_SIZE = { width: 1100, height: 800 };
 const MIN_WINDOW_SIZE = { width: 700, height: 320 };
@@ -159,6 +172,9 @@ function createWindow(sendToRenderer, geminiSessionRef) {
             updateGlobalShortcuts(keybinds, mainWindow, sendToRenderer, geminiSessionRef);
         }, 150);
     });
+
+    // Pre-warm target overlay window
+    createTargetOverlayWindow();
 
     setupWindowIpcHandlers(mainWindow, sendToRenderer, geminiSessionRef);
 
@@ -392,7 +408,7 @@ function updateGlobalShortcuts(keybinds, mainWindow, sendToRenderer, geminiSessi
                     const overlayWin = getTargetOverlayWindow();
                     if (overlayWin && !overlayWin.isDestroyed()) {
                         overlayWin.showInactive();
-                        overlayWin.webContents.send('toggle-mcq-answers-overlay');
+                        overlayWin.webContents.send('toggle-mcq-answers-overlay', { text: storedMcqAnswerText });
                     }
                 } catch (err) {
                     console.error('Error toggling MCQ answer overlay:', err);
@@ -465,4 +481,5 @@ module.exports = {
     getDefaultKeybinds,
     updateGlobalShortcuts,
     setupWindowIpcHandlers,
+    setStoredMcqAnswerText,
 };

@@ -424,8 +424,7 @@ async function sendToGroq(transcription) {
 
 function extractAndEmitMcqTargets(fullText) {
     try {
-        const prefs = getPreferences();
-        if (!prefs || !prefs.mcqBlinkTargetEnabled || !fullText) return;
+        if (!fullText || !fullText.trim()) return;
 
         const targets = [];
         const optionXMap = { 'A': 25, 'B': 45, 'C': 65, 'D': 85 };
@@ -520,19 +519,22 @@ function extractAndEmitMcqTargets(fullText) {
             }
         }
 
+        let formattedText = '';
         if (targets.length > 0) {
-            const formattedText = targets.map(t => `${t.q ? t.q + ': ' : ''}${t.option}${t.text ? ' (' + t.text + ')' : ''}`).join('  |  ');
-            console.log(`[MCQ Answer Engine] Stored ${targets.length} answers for overlay:`, formattedText);
+            formattedText = targets.map(t => `${t.q ? t.q + ': ' : ''}${t.option}${t.text ? ' (' + t.text + ')' : ''}`).join('  |  ');
+        } else {
+            // Fallback for non-MCQ answers: extract first 2 non-empty lines (max 200 chars)
+            const cleanLines = fullText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+            formattedText = cleanLines.slice(0, 2).join(' | ').substring(0, 200);
+        }
 
-            // Direct dispatch to dedicated transparent overlay window (silent store, no auto-show)
+        if (formattedText) {
+            console.log(`[MCQ Answer Engine] Stored answer text for overlay:`, formattedText);
             try {
-                const { getTargetOverlayWindow } = require('./window');
-                const overlayWin = getTargetOverlayWindow();
-                if (overlayWin && !overlayWin.isDestroyed()) {
-                    overlayWin.webContents.send('store-mcq-answers', { text: formattedText, targets });
-                }
+                const { setStoredMcqAnswerText } = require('./window');
+                setStoredMcqAnswerText(formattedText);
             } catch (overlayErr) {
-                console.warn('[MCQ Answer Engine] Dedicated overlay dispatch error:', overlayErr.message);
+                console.warn('[MCQ Answer Engine] Overlay dispatch error:', overlayErr.message);
             }
         }
     } catch (e) {

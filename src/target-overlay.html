@@ -70,10 +70,16 @@
             }
         });
 
-        ipcRenderer.on('toggle-mcq-answers-overlay', () => {
+        ipcRenderer.on('toggle-mcq-answers-overlay', (event, data) => {
             isVisible = !isVisible;
+            if (data && data.text !== undefined) {
+                answerText = data.text;
+            }
             const box = document.getElementById('faintAnswerBox');
             if (box) {
+                if (answerText) {
+                    box.textContent = answerText;
+                }
                 box.style.display = isVisible ? 'block' : 'none';
             }
         });
