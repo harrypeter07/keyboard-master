@@ -11,29 +11,32 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
     <style>
         :root {
-            /* 3 Distinct Contrasting Color Palette */
-            --bg: #090d16;
-            --surface-neo: #111726;
-            --surface-elevated: #161e31;
+            /* Lighter Cream + Dark Pink + Lavender Palette */
+            --bg: #FAF6F0;
+            --bg-subtle: #FFFDF9;
+            --surface-neo: #FFFFFF;
+            --surface-elevated: #F6EFE6;
             
-            /* Color 1: Electric Cyan */
-            --cyan: #00f2fe;
-            --cyan-glow: rgba(0, 242, 254, 0.4);
+            /* Dark Pink & Lavender Accents */
+            --dark-pink: #BE185D;
+            --dark-pink-hover: #9D174D;
+            --pink-glow: rgba(190, 24, 93, 0.25);
             
-            /* Color 2: Deep Violet */
-            --violet: #7f00ff;
-            --violet-glow: rgba(127, 0, 255, 0.4);
+            --lavender: #7E22CE;
+            --lavender-light: #A5B4FC;
+            --lavender-glow: rgba(126, 34, 206, 0.22);
             
-            /* Color 3: Vibrant Magenta */
-            --magenta: #e100ff;
+            --gradient-accent: linear-gradient(135deg, #BE185D 0%, #7E22CE 100%);
+            --gradient-subtle: linear-gradient(135deg, #FFFDF9 0%, #F5EBE1 100%);
             
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
+            --text-main: #1F1528;
+            --text-muted: #6B587B;
+            --border-soft: #EFE6DA;
             
-            /* Neomorphic Shadows */
-            --neo-shadow-out: 8px 8px 20px #05080e, -8px -8px 20px #172034;
-            --neo-shadow-in: inset 4px 4px 10px #05080e, inset -4px -4px 10px #172034;
-            --border-glow: 1px solid rgba(0, 242, 254, 0.2);
+            /* Cream & Soft Shadow Effects */
+            --neo-shadow-out: 0 14px 35px rgba(126, 34, 206, 0.07), 0 4px 12px rgba(190, 24, 93, 0.05);
+            --neo-shadow-in: inset 0 2px 6px rgba(126, 34, 206, 0.05);
+            --border-glow: 1px solid rgba(190, 24, 93, 0.2);
         }
 
         * {
@@ -70,7 +73,7 @@
             align-items: center;
             gap: 12px;
             letter-spacing: -0.5px;
-            background: linear-gradient(135deg, #ffffff, var(--cyan), var(--magenta));
+            background: linear-gradient(135deg, var(--dark-pink), var(--lavender));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
@@ -90,16 +93,16 @@
             transition: color 0.3s ease;
         }
 
-        .nav-links a:hover { color: var(--cyan); }
+        .nav-links a:hover { color: var(--dark-pink); }
 
         /* Neomorphic Buttons */
         .btn-neo {
             background: var(--surface-neo);
             box-shadow: var(--neo-shadow-out);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--border-soft);
             border-radius: 14px;
             padding: 0.9rem 2.2rem;
-            color: #ffffff;
+            color: var(--text-main);
             font-weight: 700;
             font-size: 0.95rem;
             text-decoration: none;
@@ -111,21 +114,21 @@
         }
 
         .btn-neo:hover {
-            box-shadow: 0 0 25px var(--cyan-glow), var(--neo-shadow-out);
-            border-color: var(--cyan);
-            color: var(--cyan);
+            box-shadow: 0 8px 25px var(--lavender-glow), var(--neo-shadow-out);
+            border-color: var(--lavender);
+            color: var(--lavender);
             transform: translateY(-2px);
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, var(--cyan), var(--violet));
+            background: linear-gradient(135deg, var(--dark-pink), var(--lavender));
             color: #ffffff;
-            box-shadow: 0 10px 30px var(--cyan-glow);
+            box-shadow: 0 10px 30px var(--pink-glow);
             border: none;
         }
 
         .btn-primary:hover {
-            box-shadow: 0 15px 40px var(--violet-glow);
+            box-shadow: 0 15px 40px var(--lavender-glow);
             transform: translateY(-3px);
             color: #ffffff;
         }
@@ -146,11 +149,11 @@
             padding: 0.5rem 1.2rem;
             border-radius: 100px;
             background: var(--surface-neo);
-            box-shadow: var(--neo-shadow-in);
-            border: var(--border-glow);
+            box-shadow: var(--neo-shadow-out);
+            border: 1px solid rgba(190, 24, 93, 0.2);
             font-size: 0.85rem;
             font-weight: 700;
-            color: var(--cyan);
+            color: var(--dark-pink);
             margin-bottom: 2rem;
             text-transform: uppercase;
             letter-spacing: 1px;
@@ -163,13 +166,11 @@
             line-height: 1.05;
             letter-spacing: -2px;
             margin-bottom: 1.8rem;
-            background: linear-gradient(180deg, #ffffff 30%, rgba(255, 255, 255, 0.6) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: var(--text-main);
         }
 
         .hero h1 .highlight {
-            background: linear-gradient(135deg, var(--cyan), var(--magenta));
+            background: linear-gradient(135deg, var(--dark-pink), var(--lavender));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
@@ -202,12 +203,12 @@
         }
 
         .mockup-inner {
-            background: #0b0f19;
+            background: #FFFDF9;
             border-radius: 16px;
             padding: 24px;
             text-align: left;
-            border: 1px solid rgba(0, 242, 254, 0.15);
-            box-shadow: var(--neo-shadow-in);
+            border: 1px solid rgba(190, 24, 93, 0.15);
+            box-shadow: var(--neo-shadow-out);
         }
 
         .mockup-topbar {
@@ -216,7 +217,7 @@
             gap: 8px;
             margin-bottom: 20px;
             padding-bottom: 14px;
-            border-bottom: 1px solid rgba(255,255,255,0.08);
+            border-bottom: 1px solid var(--border-soft);
         }
 
         .dot { width: 12px; height: 12px; border-radius: 50%; }
@@ -225,16 +226,16 @@
         .dot-3 { background: #27c93f; }
 
         .demo-card {
-            background: var(--surface-neo);
+            background: #FAF6F0;
             border-radius: 14px;
             padding: 20px;
             margin-bottom: 16px;
-            box-shadow: var(--neo-shadow-out);
-            border: 1px solid rgba(255, 255, 255, 0.06);
+            box-shadow: 0 4px 12px rgba(126, 34, 206, 0.04);
+            border: 1px solid var(--border-soft);
         }
 
         .demo-user {
-            color: var(--cyan);
+            color: var(--dark-pink);
             font-weight: 700;
             font-size: 0.9rem;
             margin-bottom: 6px;
@@ -244,7 +245,7 @@
         }
 
         .demo-ai {
-            color: var(--magenta);
+            color: var(--lavender);
             font-weight: 700;
             font-size: 0.9rem;
             margin-bottom: 6px;
@@ -270,6 +271,7 @@
             font-size: 3rem;
             font-weight: 800;
             letter-spacing: -1px;
+            color: var(--text-main);
         }
 
         .cards-grid {
@@ -283,7 +285,7 @@
             box-shadow: var(--neo-shadow-out);
             border-radius: 24px;
             padding: 2.5rem;
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-soft);
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             position: relative;
             overflow: hidden;
@@ -291,8 +293,8 @@
 
         .neo-card:hover {
             transform: translateY(-8px);
-            border-color: var(--cyan);
-            box-shadow: 0 20px 40px rgba(0, 242, 254, 0.15), var(--neo-shadow-out);
+            border-color: var(--dark-pink);
+            box-shadow: 0 20px 40px var(--pink-glow), var(--neo-shadow-out);
         }
 
         .card-icon-box {
@@ -305,7 +307,7 @@
             align-items: center;
             justify-content: center;
             margin-bottom: 1.8rem;
-            color: var(--cyan);
+            color: var(--dark-pink);
         }
 
         .neo-card h3 {
@@ -313,6 +315,7 @@
             font-size: 1.4rem;
             font-weight: 700;
             margin-bottom: 0.8rem;
+            color: var(--text-main);
         }
 
         .neo-card p {
@@ -340,22 +343,22 @@
             box-shadow: var(--neo-shadow-out);
             border-radius: 24px;
             padding: 3rem 2.5rem;
-            border: 1px solid rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--border-soft);
             display: flex;
             flex-direction: column;
             position: relative;
         }
 
         .pricing-card.featured {
-            border-color: var(--cyan);
-            box-shadow: 0 0 35px var(--cyan-glow), var(--neo-shadow-out);
+            border-color: var(--dark-pink);
+            box-shadow: 0 0 35px var(--pink-glow), var(--neo-shadow-out);
         }
 
         .plan-tag {
             position: absolute;
             top: 20px;
             right: 24px;
-            background: linear-gradient(135deg, var(--cyan), var(--violet));
+            background: linear-gradient(135deg, var(--dark-pink), var(--lavender));
             color: white;
             font-size: 0.75rem;
             font-weight: 800;
