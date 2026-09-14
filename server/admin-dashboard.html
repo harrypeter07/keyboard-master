@@ -270,18 +270,18 @@
             <h2>Admin Login</h2>
             <div class="form-group">
                 <label>Admin Email</label>
-                <input type="email" id="adminEmail" class="form-control" placeholder="Enter admin email">
+                <input type="email" id="adminEmail" class="form-control" placeholder="Enter admin email" value="hassanmansuri570@gmail.com">
             </div>
             <div class="form-group">
                 <label>Password</label>
-                <input type="password" id="adminPassword" class="form-control" placeholder="••••••••">
+                <input type="password" id="adminPassword" class="form-control" placeholder="••••••••" value="hassan@1505">
             </div>
             <button id="loginBtn" class="btn btn-primary" onclick="loginAdmin()">Sign In to Dashboard</button>
 
             <!-- Google OAuth SSO Option -->
             <div style="display: flex; align-items: center; gap: 10px; margin: 1.2rem 0; color: var(--muted); font-size: 0.8rem;">
                 <div style="flex: 1; height: 1px; background: var(--border);"></div>
-                <span>OR</span>
+                <span>OR SIGN IN WITH GOOGLE</span>
                 <div style="flex: 1; height: 1px; background: var(--border);"></div>
             </div>
 
@@ -299,6 +299,9 @@
                  data-logo_alignment="left"
                  style="width: 100%; display: flex; justify-content: center;">
             </div>
+            <p style="font-size: 0.72rem; color: var(--muted); text-align: center; margin-top: 8px;">
+                💡 If Google popup is blocked by your browser ad-blocker, click <strong>"Sign In to Dashboard"</strong> above directly!
+            </p>
 
             <div id="authError" style="color: var(--danger); font-size: 0.85rem; margin-top: 1rem; text-align: center;"></div>
         </div>
