@@ -83,7 +83,19 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'landing.html'));
 });
 
-// App Preview Image Asset
+// App Assets (Logo, Favicon & Preview)
+app.get('/logo.png', (req, res) => {
+    res.sendFile(path.join(__dirname, 'logo.png'));
+});
+
+app.get('/favicon.png', (req, res) => {
+    res.sendFile(path.join(__dirname, 'favicon.png'));
+});
+
+app.get('/favicon.ico', (req, res) => {
+    res.sendFile(path.join(__dirname, 'favicon.png'));
+});
+
 app.get('/km_app_preview.jpg', (req, res) => {
     res.sendFile(path.join(__dirname, 'km_app_preview.jpg'));
 });
