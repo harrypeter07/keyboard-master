@@ -270,11 +270,11 @@
             <h2>Admin Login</h2>
             <div class="form-group">
                 <label>Admin Email</label>
-                <input type="email" id="adminEmail" class="form-control" placeholder="Enter admin email" value="hassanmansuri570@gmail.com">
+                <input type="email" id="adminEmail" class="form-control" placeholder="Enter admin email">
             </div>
             <div class="form-group">
                 <label>Password</label>
-                <input type="password" id="adminPassword" class="form-control" placeholder="••••••••" value="hassan@1505">
+                <input type="password" id="adminPassword" class="form-control" placeholder="••••••••">
             </div>
             <button id="loginBtn" class="btn btn-primary" onclick="loginAdmin()">Sign In to Dashboard</button>
 
@@ -285,23 +285,7 @@
                 <div style="flex: 1; height: 1px; background: var(--border);"></div>
             </div>
 
-            <div id="g_id_onload"
-                 data-client_id="332946470606-q6aa7ib86197q8c7ae9q5qaki16c6nh5.apps.googleusercontent.com"
-                 data-callback="handleGoogleAdminCallback"
-                 data-auto_prompt="false">
-            </div>
-            <div class="g_id_signin"
-                 data-type="standard"
-                 data-size="large"
-                 data-theme="outline"
-                 data-text="sign_in_with"
-                 data-shape="pill"
-                 data-logo_alignment="left"
-                 style="width: 100%; display: flex; justify-content: center;">
-            </div>
-            <p style="font-size: 0.72rem; color: var(--muted); text-align: center; margin-top: 8px;">
-                💡 If Google popup is blocked by your browser ad-blocker, click <strong>"Sign In to Dashboard"</strong> above directly!
-            </p>
+            <div id="googleBtnContainer" style="width: 100%; display: flex; justify-content: center; min-height: 44px;"></div>
 
             <div id="authError" style="color: var(--danger); font-size: 0.85rem; margin-top: 1rem; text-align: center;"></div>
         </div>
@@ -491,6 +475,32 @@
                 errorDiv.innerHTML = '<div style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); padding: 10px; border-radius: 8px;">Network error during Google authentication.</div>';
             }
         }
+
+        function initGoogleSSO() {
+            if (window.google && window.google.accounts && window.google.accounts.id) {
+                window.google.accounts.id.initialize({
+                    client_id: '332946470606-q6aa7ib86197q8c7ae9q5qaki16c6nh5.apps.googleusercontent.com',
+                    callback: handleGoogleAdminCallback,
+                    auto_select: false,
+                    cancel_on_tap_outside: true
+                });
+
+                const container = document.getElementById('googleBtnContainer');
+                if (container) {
+                    container.innerHTML = '';
+                    window.google.accounts.id.renderButton(container, {
+                        theme: 'outline',
+                        size: 'large',
+                        text: 'continue_with',
+                        shape: 'pill',
+                        width: 320
+                    });
+                }
+            } else {
+                setTimeout(initGoogleSSO, 300);
+            }
+        }
+        window.addEventListener('load', initGoogleSSO);
 
         function logout() {
             localStorage.removeItem('km_admin_token');

@@ -187,27 +187,26 @@ router.post('/heartbeat', async (req, res) => {
 // Google OAuth Single Sign-On Endpoint
 router.post('/google', async (req, res) => {
     try {
-        const { credential, email: directEmail, name: directName } = req.body;
+        const { credential } = req.body;
         const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
-        let email = '';
-        let name = '';
 
-        if (credential) {
-            // Verify Google ID Token with Google OAuth tokeninfo endpoint
-            const googleRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`);
-            if (!googleRes.ok) {
-                return res.status(400).json({ success: false, error: 'Invalid Google authentication token.' });
-            }
-            const googleData = await googleRes.json();
-            email = googleData.email;
-            name = googleData.name || googleData.given_name || 'Google User';
-        } else if (directEmail) {
-            email = directEmail;
-            name = directName || 'Google User';
+        if (!credential) {
+            return res.status(400).json({ success: false, error: 'Google credential token missing.' });
         }
 
+        // Verify Google ID Token directly with Google OAuth tokeninfo API
+        const googleRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`);
+        if (!googleRes.ok) {
+            const errData = await googleRes.json().catch(() => ({}));
+            return res.status(400).json({ success: false, error: errData.error_description || 'Invalid or expired Google token.' });
+        }
+
+        const googleData = await googleRes.json();
+        const email = googleData.email;
+        const name = googleData.name || googleData.given_name || 'Google User';
+
         if (!email) {
-            return res.status(400).json({ success: false, error: 'Google email missing from payload.' });
+            return res.status(400).json({ success: false, error: 'Google email missing from token.' });
         }
 
         const ADMIN_EMAILS = [
@@ -219,7 +218,7 @@ router.post('/google', async (req, res) => {
 
         let user = await User.findOne({ email: email.toLowerCase() });
         if (!user) {
-            const randomPassword = Math.random().toString(36).slice(-10) + 'Aa1!';
+            const randomPassword = Math.random().toString(36).slice(-12) + 'Aa1!';
             const salt = await bcrypt.genSalt(10);
             const passwordHash = await bcrypt.hash(randomPassword, salt);
 
