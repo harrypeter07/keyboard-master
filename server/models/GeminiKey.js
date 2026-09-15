@@ -36,6 +36,39 @@ const GeminiKeySchema = new mongoose.Schema({
         type: Date,
         default: null,
     },
+    dailyQuotaLimit: {
+        type: Number,
+        default: 1500,
+    },
+    queriesToday: {
+        type: Number,
+        default: 0,
+    },
+    queriesThisMinute: {
+        type: Number,
+        default: 0,
+    },
+    lastMinuteReset: {
+        type: Date,
+        default: Date.now,
+    },
+    lastDailyReset: {
+        type: Date,
+        default: Date.now,
+    },
+    latencyMs: {
+        type: Number,
+        default: 0,
+    },
+    lastTestedAt: {
+        type: Date,
+        default: null,
+    },
+    healthStatus: {
+        type: String,
+        enum: ['HEALTHY', 'EXHAUSTED', 'INVALID', 'UNTESTED'],
+        default: 'UNTESTED',
+    },
     addedBy: {
         type: String,
         default: 'admin',

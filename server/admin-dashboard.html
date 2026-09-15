@@ -795,11 +795,12 @@
                     <div class="section-header">
                         <div>
                             <div class="section-title">🔑 Server Gemini API Key Pool</div>
-                            <div class="section-subtitle">Auto-rotating key pool for zero-latency paid member execution.</div>
+                            <div class="section-subtitle">Real-time quota tracking, latency probing, and highest-capacity key allocation.</div>
                         </div>
-                        <div style="display: flex; gap: 8px;">
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                            <button class="btn btn-success btn-sm" id="btnProbeAll" onclick="probeAllKeys()">⚡ Live Probe All Quotas</button>
                             <button class="btn btn-primary btn-sm" onclick="openModal('addKeysModal')">+ Add Keys</button>
-                            <button class="btn btn-warning btn-sm" onclick="openModal('resetQuotasModal')">⚡ Reset All Quota Limits</button>
+                            <button class="btn btn-warning btn-sm" onclick="openModal('resetQuotasModal')">🔄 Reset All Quota Limits</button>
                         </div>
                     </div>
 
@@ -809,10 +810,10 @@
                                 <tr>
                                     <th>Key Label</th>
                                     <th>API Key (Masked)</th>
-                                    <th>Status</th>
-                                    <th>Usage Count</th>
+                                    <th>Health & Latency</th>
+                                    <th>Quota Capacity Left</th>
+                                    <th>Total Used</th>
                                     <th>Last Used</th>
-                                    <th>Exhausted Models</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -1297,7 +1298,7 @@
             `).join('');
         }
 
-        /* ── Key Pool Management ── */
+        /* ── Key Pool Management & Health Probing ── */
         async function loadKeyPool() {
             try {
                 const res = await fetch('/api/admin/keys', {
@@ -1319,23 +1320,43 @@
                         return;
                     }
                     tbody.innerHTML = allKeysData.map(k => {
-                        let statusBadge = '<span class="badge badge-success">Active</span>';
-                        if (!k.isActive) {
-                            statusBadge = '<span class="badge badge-danger">Disabled</span>';
-                        } else if (k.quotaExhausted) {
-                            statusBadge = '<span class="badge badge-warning">Quota Reached (429)</span>';
+                        let healthBadge = '<span class="badge badge-muted">UNTESTED</span>';
+                        const hStatus = k.healthStatus || (k.quotaExhausted ? 'EXHAUSTED' : (!k.isActive ? 'INVALID' : 'HEALTHY'));
+                        if (hStatus === 'HEALTHY') {
+                            healthBadge = `<span class="badge badge-success">HEALTHY ${k.latencyMs ? '(' + k.latencyMs + 'ms)' : ''}</span>`;
+                        } else if (hStatus === 'EXHAUSTED' || k.quotaExhausted) {
+                            healthBadge = '<span class="badge badge-warning">EXHAUSTED (429)</span>';
+                        } else if (hStatus === 'INVALID' || !k.isActive) {
+                            healthBadge = '<span class="badge badge-danger">INVALID / DISABLED</span>';
                         }
+
                         const maskedKey = k.key.length > 10 ? (k.key.substring(0, 6) + '...' + k.key.substring(k.key.length - 4)) : k.key;
-                        const exhaustedModels = (k.exhaustedModels || []).join(', ') || '-';
+                        const limit = k.dailyQuotaLimit || 1500;
+                        const queriesToday = k.queriesToday || 0;
+                        const rem = Math.max(0, limit - queriesToday);
+                        const pct = Math.min(100, Math.max(0, Math.round((rem / limit) * 100)));
+                        const barColor = pct >= 50 ? '#10B981' : (pct >= 20 ? '#F59E0B' : '#EF4444');
+
                         return `
                             <tr>
                                 <td><strong>${k.label || 'Gemini Key'}</strong></td>
                                 <td><code class="mono" style="background: rgba(0,0,0,0.05); padding: 3px 8px; border-radius: 4px;">${maskedKey}</code></td>
-                                <td>${statusBadge}</td>
-                                <td><strong>${k.usageCount || 0}</strong></td>
-                                <td>${k.lastUsedAt ? new Date(k.lastUsedAt).toLocaleString() : 'Never'}</td>
-                                <td><span style="font-size: 0.8rem; color: var(--text-muted);">${exhaustedModels}</span></td>
+                                <td>${healthBadge}</td>
                                 <td>
+                                    <div style="min-width: 140px;">
+                                        <div style="font-size: 0.8rem; font-weight: 600; margin-bottom: 3px; display: flex; justify-content: space-between;">
+                                            <span>${rem.toLocaleString()} / ${limit.toLocaleString()}</span>
+                                            <span style="color: ${barColor}; font-weight: 700;">${pct}%</span>
+                                        </div>
+                                        <div style="width: 100%; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden;">
+                                            <div style="width: ${pct}%; height: 100%; background: ${barColor}; transition: width 0.3s ease;"></div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><strong>${(k.usageCount || 0).toLocaleString()}</strong></td>
+                                <td>${k.lastUsedAt ? new Date(k.lastUsedAt).toLocaleTimeString() : 'Never'}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-secondary" title="Test key health & response time" onclick="probeSingleKey('${k._id}')">🎯 Probe</button>
                                     <button class="btn btn-sm ${k.isActive ? 'btn-secondary' : 'btn-success'}" onclick="toggleKeyStatus('${k._id}', ${!k.isActive})">
                                         ${k.isActive ? 'Disable' : 'Enable'}
                                     </button>
@@ -1347,6 +1368,55 @@
                 }
             } catch (err) {
                 console.error('Error loading key pool:', err);
+            }
+        }
+
+        async function probeSingleKey(keyId) {
+            try {
+                showToast('Testing key latency and rate limits...', 'info');
+                const res = await fetch('/api/admin/keys/probe', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
+                    body: JSON.stringify({ keyId })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast(data.message, 'success');
+                    loadKeyPool();
+                } else {
+                    showToast(data.error || 'Failed to probe key', 'error');
+                }
+            } catch (err) {
+                showToast('Network error probing key.', 'error');
+            }
+        }
+
+        async function probeAllKeys() {
+            const btn = document.getElementById('btnProbeAll');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerText = '⏳ Probing All Keys...';
+            }
+            try {
+                showToast('Sending live test prompts to all keys in pool...', 'info');
+                const res = await fetch('/api/admin/keys/probe-all', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast(data.message, 'success');
+                    loadKeyPool();
+                } else {
+                    showToast(data.error || 'Failed to probe key pool', 'error');
+                }
+            } catch (err) {
+                showToast('Network error probing key pool.', 'error');
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerText = '⚡ Live Probe All Quotas';
+                }
             }
         }
 

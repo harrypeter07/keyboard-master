@@ -41,13 +41,30 @@ async function memberAuth(req, res, next) {
     }
 }
 
-// Auto-cooldown helper: Reset keys whose exhaustedAt is older than AUTO_COOLDOWN_HOURS
+// Auto-cooldown and window reset helper
 async function autoResetCooldownKeys() {
     try {
-        const cutoff = new Date(Date.now() - AUTO_COOLDOWN_HOURS * 60 * 60 * 1000);
+        const now = new Date();
+        const cutoff = new Date(now.getTime() - AUTO_COOLDOWN_HOURS * 60 * 60 * 1000);
+        const minuteCutoff = new Date(now.getTime() - 60 * 1000);
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+        // 1. Reset 1-hour exhausted cooldown keys
         await GeminiKey.updateMany(
             { quotaExhausted: true, exhaustedAt: { $lt: cutoff } },
-            { $set: { quotaExhausted: false, exhaustedAt: null, exhaustedModels: [] } }
+            { $set: { quotaExhausted: false, exhaustedAt: null, exhaustedModels: [], healthStatus: 'UNTESTED' } }
+        );
+
+        // 2. Reset minute counters (> 60s old)
+        await GeminiKey.updateMany(
+            { lastMinuteReset: { $lt: minuteCutoff } },
+            { $set: { queriesThisMinute: 0, lastMinuteReset: now } }
+        );
+
+        // 3. Reset daily counters (before today 00:00 UTC)
+        await GeminiKey.updateMany(
+            { lastDailyReset: { $lt: startOfToday } },
+            { $set: { queriesToday: 0, lastDailyReset: now, quotaExhausted: false, exhaustedAt: null } }
         );
     } catch (e) {
         console.error('Auto reset keys error:', e.message);
@@ -60,39 +77,68 @@ router.post('/acquire', memberAuth, async (req, res) => {
         await autoResetCooldownKeys();
 
         // Get all active non-exhausted keys
-        let availableKeys = await GeminiKey.find({ isActive: true, quotaExhausted: false }).sort({ usageCount: 1, lastUsedAt: 1 });
+        let availableKeys = await GeminiKey.find({ isActive: true, quotaExhausted: false });
+
+        // Filter out keys that have reached per-minute rate limits (>= 15 RPM)
+        let eligibleKeys = availableKeys.filter(k => (k.queriesThisMinute || 0) < 15);
+
+        if (eligibleKeys.length === 0 && availableKeys.length > 0) {
+            // Fallback to any active key if all are temporarily rate limited in the current minute
+            eligibleKeys = availableKeys;
+        }
 
         // If none found, attempt forced cooldown check on any exhausted keys
-        if (availableKeys.length === 0) {
+        if (eligibleKeys.length === 0) {
             const exhaustedKeys = await GeminiKey.find({ isActive: true, quotaExhausted: true }).sort({ exhaustedAt: 1 });
             if (exhaustedKeys.length > 0) {
-                // Reset the oldest exhausted key to give emergency availability
                 const oldest = exhaustedKeys[0];
                 oldest.quotaExhausted = false;
                 oldest.exhaustedAt = null;
+                oldest.healthStatus = 'UNTESTED';
                 await oldest.save();
-                availableKeys = [oldest];
+                eligibleKeys = [oldest];
             }
         }
 
-        if (availableKeys.length === 0) {
+        if (eligibleKeys.length === 0) {
             return res.status(429).json({
                 success: false,
                 error: 'All server Gemini API keys in pool have reached daily quota limits. Please try again later or add your personal key in Settings.'
             });
         }
 
-        // Pick the least-used key
-        const selectedKey = availableKeys[0];
+        // Sort by Highest Remaining Capacity (dailyQuotaLimit - queriesToday) descending, tie-break by least recently used
+        eligibleKeys.sort((a, b) => {
+            const remA = Math.max(0, (a.dailyQuotaLimit || 1500) - (a.queriesToday || 0));
+            const remB = Math.max(0, (b.dailyQuotaLimit || 1500) - (b.queriesToday || 0));
+            if (remB !== remA) {
+                return remB - remA; // Highest capacity first
+            }
+            const timeA = a.lastUsedAt ? new Date(a.lastUsedAt).getTime() : 0;
+            const timeB = b.lastUsedAt ? new Date(b.lastUsedAt).getTime() : 0;
+            return timeA - timeB; // Least recently used first
+        });
+
+        // Pick the most efficient key with the highest remaining queries
+        const selectedKey = eligibleKeys[0];
         selectedKey.usageCount = (selectedKey.usageCount || 0) + 1;
+        selectedKey.queriesToday = (selectedKey.queriesToday || 0) + 1;
+        selectedKey.queriesThisMinute = (selectedKey.queriesThisMinute || 0) + 1;
         selectedKey.lastUsedAt = new Date();
         await selectedKey.save();
+
+        const queriesRemaining = Math.max(0, (selectedKey.dailyQuotaLimit || 1500) - selectedKey.queriesToday);
+        const capacityPercent = Math.round((queriesRemaining / (selectedKey.dailyQuotaLimit || 1500)) * 100);
 
         return res.json({
             success: true,
             keyId: selectedKey._id,
             apiKey: selectedKey.key,
-            totalAvailableKeys: availableKeys.length,
+            queriesRemaining,
+            dailyQuotaLimit: selectedKey.dailyQuotaLimit || 1500,
+            capacityPercent,
+            healthStatus: selectedKey.healthStatus || 'HEALTHY',
+            totalAvailableKeys: eligibleKeys.length,
         });
     } catch (err) {
         console.error('Key acquire error:', err);
@@ -110,6 +156,7 @@ router.post('/report-quota-exceeded', memberAuth, async (req, res) => {
             if (keyToMark) {
                 keyToMark.quotaExhausted = true;
                 keyToMark.exhaustedAt = new Date();
+                keyToMark.healthStatus = 'EXHAUSTED';
                 if (model && !keyToMark.exhaustedModels.includes(model)) {
                     keyToMark.exhaustedModels.push(model);
                 }
@@ -125,7 +172,7 @@ router.post('/report-quota-exceeded', memberAuth, async (req, res) => {
             isActive: true,
             quotaExhausted: false,
             _id: { $ne: keyId }
-        }).sort({ usageCount: 1, lastUsedAt: 1 });
+        });
 
         if (availableKeys.length === 0) {
             return res.status(429).json({
@@ -134,16 +181,32 @@ router.post('/report-quota-exceeded', memberAuth, async (req, res) => {
             });
         }
 
+        // Sort by highest remaining queries
+        availableKeys.sort((a, b) => {
+            const remA = Math.max(0, (a.dailyQuotaLimit || 1500) - (a.queriesToday || 0));
+            const remB = Math.max(0, (b.dailyQuotaLimit || 1500) - (b.queriesToday || 0));
+            if (remB !== remA) return remB - remA;
+            const timeA = a.lastUsedAt ? new Date(a.lastUsedAt).getTime() : 0;
+            const timeB = b.lastUsedAt ? new Date(b.lastUsedAt).getTime() : 0;
+            return timeA - timeB;
+        });
+
         const newKey = availableKeys[0];
         newKey.usageCount = (newKey.usageCount || 0) + 1;
+        newKey.queriesToday = (newKey.queriesToday || 0) + 1;
+        newKey.queriesThisMinute = (newKey.queriesThisMinute || 0) + 1;
         newKey.lastUsedAt = new Date();
         await newKey.save();
+
+        const queriesRemaining = Math.max(0, (newKey.dailyQuotaLimit || 1500) - newKey.queriesToday);
 
         return res.json({
             success: true,
             message: 'Key rotated successfully after quota error',
             newKeyId: newKey._id,
             newApiKey: newKey.key,
+            queriesRemaining,
+            dailyQuotaLimit: newKey.dailyQuotaLimit || 1500,
             totalAvailableKeys: availableKeys.length,
         });
     } catch (err) {

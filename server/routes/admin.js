@@ -246,12 +246,64 @@ router.delete('/keys/:id', adminAuth, async (req, res) => {
     }
 });
 
+// Helper function to probe a single Gemini Key health and latency
+const https = require('https');
+
+async function probeKey(keyItem) {
+    const startTime = Date.now();
+    return new Promise((resolve) => {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${keyItem.key}`;
+        const postData = JSON.stringify({ contents: [{ parts: [{ text: 'ping' }] }] });
+
+        const req = https.request(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Content-Length': Buffer.byteLength(postData)
+            }
+        }, async (res) => {
+            const latencyMs = Date.now() - startTime;
+            keyItem.latencyMs = latencyMs;
+            keyItem.lastTestedAt = new Date();
+
+            let data = '';
+            res.on('data', chunk => data += chunk);
+            res.on('end', async () => {
+                if (res.statusCode === 200) {
+                    keyItem.healthStatus = 'HEALTHY';
+                    keyItem.quotaExhausted = false;
+                    keyItem.exhaustedAt = null;
+                } else if (res.statusCode === 429) {
+                    keyItem.healthStatus = 'EXHAUSTED';
+                    keyItem.quotaExhausted = true;
+                    keyItem.exhaustedAt = new Date();
+                } else if (res.statusCode === 400 || res.statusCode === 401 || res.statusCode === 403) {
+                    keyItem.healthStatus = 'INVALID';
+                    keyItem.isActive = false; // Disable dead keys
+                }
+                await keyItem.save();
+                resolve(keyItem);
+            });
+        });
+
+        req.on('error', async (err) => {
+            keyItem.healthStatus = 'INVALID';
+            keyItem.lastTestedAt = new Date();
+            await keyItem.save();
+            resolve(keyItem);
+        });
+
+        req.write(postData);
+        req.end();
+    });
+}
+
 // Reset Quota Limits for All Keys in Pool
 router.post('/keys/reset-quotas', adminAuth, async (req, res) => {
     try {
         const result = await GeminiKey.updateMany(
             { quotaExhausted: true },
-            { $set: { quotaExhausted: false, exhaustedAt: null, exhaustedModels: [] } }
+            { $set: { quotaExhausted: false, exhaustedAt: null, exhaustedModels: [], healthStatus: 'UNTESTED' } }
         );
 
         return res.json({
@@ -260,6 +312,79 @@ router.post('/keys/reset-quotas', adminAuth, async (req, res) => {
         });
     } catch (err) {
         return res.status(500).json({ success: false, error: 'Failed to reset key quotas.' });
+    }
+});
+
+// Live Health Probe Single Key
+router.post('/keys/probe', adminAuth, async (req, res) => {
+    try {
+        const { keyId } = req.body;
+        const keyItem = await GeminiKey.findById(keyId);
+        if (!keyItem) {
+            return res.status(404).json({ success: false, error: 'Key not found.' });
+        }
+
+        const updated = await probeKey(keyItem);
+        return res.json({
+            success: true,
+            message: `Key "${updated.label}" probed: ${updated.healthStatus} (${updated.latencyMs}ms)`,
+            key: updated
+        });
+    } catch (err) {
+        return res.status(500).json({ success: false, error: 'Failed to probe key.' });
+    }
+});
+
+// Live Health & Quota Probe ALL Keys in Pool Concurrently
+router.post('/keys/probe-all', adminAuth, async (req, res) => {
+    try {
+        const allKeys = await GeminiKey.find();
+        if (allKeys.length === 0) {
+            return res.json({ success: true, message: 'No keys in pool to probe.', keys: [] });
+        }
+
+        const probePromises = allKeys.map(k => probeKey(k));
+        const probedResults = await Promise.all(probePromises);
+
+        const healthyCount = probedResults.filter(k => k.healthStatus === 'HEALTHY').length;
+        const exhaustedCount = probedResults.filter(k => k.healthStatus === 'EXHAUSTED').length;
+        const invalidCount = probedResults.filter(k => k.healthStatus === 'INVALID').length;
+
+        return res.json({
+            success: true,
+            message: `Probed ${probedResults.length} keys: ${healthyCount} Healthy, ${exhaustedCount} Exhausted, ${invalidCount} Invalid.`,
+            stats: { healthyCount, exhaustedCount, invalidCount, total: probedResults.length },
+            keys: probedResults
+        });
+    } catch (err) {
+        console.error('Probe all error:', err);
+        return res.status(500).json({ success: false, error: 'Failed to probe key pool.' });
+    }
+});
+
+// Update Key Quota Limits or Label
+router.put('/keys/:id', adminAuth, async (req, res) => {
+    try {
+        const keyId = req.params.id;
+        const { label, dailyQuotaLimit } = req.body;
+
+        const keyItem = await GeminiKey.findById(keyId);
+        if (!keyItem) {
+            return res.status(404).json({ success: false, error: 'Key not found.' });
+        }
+
+        if (typeof label === 'string' && label.trim()) {
+            keyItem.label = label.trim();
+        }
+
+        if (typeof dailyQuotaLimit === 'number' && dailyQuotaLimit > 0) {
+            keyItem.dailyQuotaLimit = dailyQuotaLimit;
+        }
+
+        await keyItem.save();
+        return res.json({ success: true, message: `Updated key "${keyItem.label}" settings.`, key: keyItem });
+    } catch (err) {
+        return res.status(500).json({ success: false, error: 'Failed to update key settings.' });
     }
 });
 
