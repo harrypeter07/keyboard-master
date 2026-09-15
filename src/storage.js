@@ -5,15 +5,14 @@ const os = require('os');
 const CONFIG_VERSION = 1;
 
 const DEFAULT_GEMINI_FALLBACKS = [
+    'gemini-3.8-flash',
+    'gemini-3.7-flash',
     'gemini-3.6-flash',
     'gemini-3.5-flash',
+    'gemini-3.5-flash-lite',
     'gemini-3.1-flash-lite',
-    'gemini-3-flash-preview',
-    'gemini-2.5-flash',
-    'gemini-2.5-pro',
-    'gemini-2.0-flash',
-    'gemini-1.5-flash',
     'gemini-flash-latest',
+    'gemini-flash-lite-latest',
 ];
 
 // Default values
@@ -22,8 +21,8 @@ const DEFAULT_CONFIG = {
     onboarded: false,
     layout: 'normal',
     geminiLiveModel: 'gemini-3.1-flash-live-preview',
-    geminiFlashModel: 'gemini-3.6-flash',
-    geminiFlashLiteModel: 'gemini-3.5-flash',
+    geminiFlashModel: 'gemini-3.8-flash',
+    geminiFlashLiteModel: 'gemini-3.5-flash-lite',
     gemmaModel: 'gemma-4-26b-a4b-it',
     geminiModelPriorityList: DEFAULT_GEMINI_FALLBACKS,
     groqModel: 'qwen/qwen3.6-27b',
