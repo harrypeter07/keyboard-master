@@ -228,7 +228,6 @@ export class CustomizeView extends LitElement {
             const [prefs, keybinds] = await Promise.all([cheatingDaddy.storage.getPreferences(), cheatingDaddy.storage.getKeybinds()]);
             this.audioListeningEnabled = prefs.audioListeningEnabled ?? true;
             this.googleSearchEnabled = prefs.googleSearchEnabled ?? true;
-            this.mcqBlinkTargetEnabled = prefs.mcqBlinkTargetEnabled ?? false;
             this.backgroundTransparency = prefs.backgroundTransparency ?? 0.8;
             this.fontSize = prefs.fontSize ?? 20;
             this.audioMode = prefs.audioMode ?? 'speaker_only';
@@ -306,7 +305,6 @@ export class CustomizeView extends LitElement {
             scrollUp: isMac ? 'Cmd+Shift+Up' : 'Ctrl+Shift+Up',
             scrollDown: isMac ? 'Cmd+Shift+Down' : 'Ctrl+Shift+Down',
             resetMemory: isMac ? 'Cmd+K' : 'Ctrl+K',
-            toggleMcqAnswers: isMac ? 'Cmd+4' : 'Ctrl+4',
         };
     }
 
@@ -319,7 +317,6 @@ export class CustomizeView extends LitElement {
             { key: 'toggleVisibility', name: 'Toggle Visibility', description: 'Show or hide the app window' },
             { key: 'toggleClickThrough', name: 'Toggle Click-through', description: 'Enable or disable click-through mode' },
             { key: 'nextStep', name: 'Ask Next Step', description: 'Take screenshot and ask for next step' },
-            { key: 'toggleMcqAnswers', name: 'Toggle Stealth Answer Overlay', description: 'Show or hide faint answer options text (Ctrl+4 / Cmd+4)' },
             { key: 'resetMemory', name: 'Reset Context Memory', description: 'Clear active session history and start fresh context' },
             { key: 'previousResponse', name: 'Previous Response', description: 'Move to previous AI response' },
             { key: 'nextResponse', name: 'Next Response', description: 'Move to next AI response' },
@@ -628,29 +625,16 @@ export class CustomizeView extends LitElement {
         `;
     }
 
-    async handleMcqBlinkToggleChange(e) {
-        this.mcqBlinkTargetEnabled = e.target.checked;
-        await cheatingDaddy.storage.updatePreference('mcqBlinkTargetEnabled', this.mcqBlinkTargetEnabled);
-        this.requestUpdate();
-    }
-
     renderAppearanceSection() {
         return html`
             <section class="surface">
-                <div class="surface-title">Appearance & Target Visuals</div>
+                <div class="surface-title">Appearance</div>
                 <div class="form-grid">
                     <div class="form-group">
                         <label class="form-label">Theme</label>
                         <select class="control" .value=${this.theme} @change=${this.handleThemeChange}>
                             ${this.getThemes().map(theme => html`<option value=${theme.value}>${theme.name}</option>`)}
                         </select>
-                    </div>
-                    <div class="toggle-row" style="grid-column: span 2; margin-top: 4px;">
-                        <input type="checkbox" class="toggle-input" id="mcqBlinkToggle" .checked=${this.mcqBlinkTargetEnabled} @change=${this.handleMcqBlinkToggleChange} />
-                        <label class="toggle-label" for="mcqBlinkToggle">
-                            <strong>MCQ / Stealth Answer Overlay (Ctrl+4)</strong>
-                            <div style="font-size: 11px; color: var(--text-muted);">Extracts concise MCQ/fill-in-blank options silently. Press Ctrl+4 (Cmd+4) to show/hide faint text overlay.</div>
-                        </label>
                     </div>
                     <div class="form-group slider-wrap">
                         <div class="slider-header">

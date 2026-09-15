@@ -393,7 +393,6 @@ async function sendToGroq(transcription) {
             });
 
             saveConversationTurn(transcription, cleanedResponse);
-            extractAndEmitMcqTargets(cleanedResponse);
         } else {
             console.warn(`Groq returned no final answer (${modelToUse})`);
             logTransportEvent('groq.text.empty_response', {
@@ -419,126 +418,6 @@ async function sendToGroq(transcription) {
             stack: error.stack,
         });
         sendToRenderer('update-status', 'Groq error: ' + error.message);
-    }
-}
-
-function extractAndEmitMcqTargets(fullText) {
-    try {
-        if (!fullText || !fullText.trim()) return;
-
-        const targets = [];
-        const optionXMap = { 'A': 25, 'B': 45, 'C': 65, 'D': 85 };
-
-        // Strategy 1: Look for JSON mcq_targets array output
-        const jsonMatch = fullText.match(/```(?:json)?\s*(\{[\s\S]*?"mcq_targets"[\s\S]*?\})\s*```/i) ||
-                          fullText.match(/(\{[\s\S]*?"mcq_targets"[\s\S]*?\})/i);
-
-        if (jsonMatch) {
-            try {
-                const parsed = JSON.parse(jsonMatch[1]);
-                if (Array.isArray(parsed.mcq_targets) && parsed.mcq_targets.length > 0) {
-                    parsed.mcq_targets.forEach((item, idx) => {
-                        const qLabel = item.q || item.question || `Q${idx + 1}`;
-                        const opt = String(item.option || item.answer || 'A').toUpperCase().trim();
-                        let top = parseFloat(item.top || item.y || (item.box_2d ? item.box_2d[0] : null));
-                        let left = parseFloat(item.left || item.x || (item.box_2d ? item.box_2d[1] : null));
-
-                        if (isNaN(top) || top <= 0) {
-                            top = 20 + (idx * 22);
-                        }
-                        if (isNaN(left) || left <= 0) {
-                            left = optionXMap[opt] || 28;
-                        }
-
-                        targets.push({
-                            q: qLabel,
-                            option: opt,
-                            top: Math.min(Math.max(Math.round(top), 5), 92),
-                            left: Math.min(Math.max(Math.round(left), 5), 92),
-                        });
-                    });
-                }
-            } catch (jsonErr) {
-                console.warn('[MCQ Target Engine] JSON parse warning:', jsonErr.message);
-            }
-        }
-
-        // Strategy 2: Multi-Question Regex Extraction
-        if (targets.length === 0) {
-            const regexes = [
-                /(?:Q|Question|\#)?\s*(\d+)[\.:\)\s]+(?:Option|Answer|Choice)?\s*[:\-]?\s*([A-D])\b/gi,
-                /(?:Option|Answer|Choice)\s*(\d+)?\s*[:\-]?\s*([A-D])\b/gi,
-            ];
-
-            let matches = [];
-            let match;
-
-            const re1 = regexes[0];
-            while ((match = re1.exec(fullText)) !== null) {
-                matches.push({
-                    qNum: `Q${match[1]}`,
-                    option: match[2].toUpperCase(),
-                });
-            }
-
-            if (matches.length === 0) {
-                const re2 = regexes[1];
-                while ((match = re2.exec(fullText)) !== null) {
-                    matches.push({
-                        qNum: match[1] ? `Q${match[1]}` : `Q${matches.length + 1}`,
-                        option: match[2].toUpperCase(),
-                    });
-                }
-            }
-
-            if (matches.length === 0) {
-                const singleMatch = fullText.match(/(?:Option|Answer|Choice)\s*[:\-]?\s*([A-D])\b/i) ||
-                                    fullText.match(/\b([A-D])[\.\)]\s/i);
-                if (singleMatch) {
-                    matches.push({ qNum: 'Q1', option: singleMatch[1].toUpperCase() });
-                }
-            }
-
-            const totalQuestions = matches.length;
-            if (totalQuestions > 0) {
-                const topStart = totalQuestions === 1 ? 42 : 20;
-                const topEnd = totalQuestions === 1 ? 42 : 86;
-                const step = totalQuestions > 1 ? (topEnd - topStart) / (totalQuestions - 1) : 0;
-
-                matches.forEach((item, idx) => {
-                    const topPercent = Math.round(topStart + (idx * step));
-                    const leftPercent = optionXMap[item.option] || 28;
-
-                    targets.push({
-                        q: item.qNum,
-                        option: item.option,
-                        top: topPercent,
-                        left: leftPercent,
-                    });
-                });
-            }
-        }
-
-        let formattedText = '';
-        if (targets.length > 0) {
-            formattedText = targets.map(t => `${t.q ? t.q + ': ' : ''}${t.option}${t.text ? ' (' + t.text + ')' : ''}`).join('  |  ');
-        } else {
-            // Fallback for non-MCQ answers: extract first 2 non-empty lines (max 200 chars)
-            const cleanLines = fullText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-            formattedText = cleanLines.slice(0, 2).join(' | ').substring(0, 200);
-        }
-
-        if (formattedText) {
-            console.log(`[MCQ Answer Engine] Stored answer text for overlay:`, formattedText);
-            try {
-                const { setStoredMcqAnswerText } = require('./window');
-                setStoredMcqAnswerText(formattedText);
-            } catch (overlayErr) {
-                console.warn('[MCQ Answer Engine] Overlay dispatch error:', overlayErr.message);
-            }
-        }
-    } catch (e) {
-        console.warn('[MCQ Answer Engine] Error checking MCQ target options:', e.message);
     }
 }
 
@@ -649,8 +528,6 @@ async function sendImageToGroq(base64Data, prompt) {
             });
             return { success: false, error: GROQ_EMPTY_RESPONSE_MESSAGE };
         }
-
-        extractAndEmitMcqTargets(cleanedResponse);
 
         saveScreenAnalysis(prompt, cleanedResponse, model);
         logTransportEvent('groq.image.completed', {
@@ -1196,9 +1073,6 @@ async function sendImageToGeminiHttp(base64Data, prompt) {
 
                 // Save current working active key index so subsequent calls don't retry exhausted keys!
                 setActiveKeyIndex(keyIdx);
-
-                // Check and trigger MCQ Blinking Target Lights for all detected questions
-                extractAndEmitMcqTargets(fullText);
 
                 // Turn off loader card
                 sendToRenderer('screen-analysis-loading', false);

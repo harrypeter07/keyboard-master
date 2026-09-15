@@ -3,82 +3,9 @@ const path = require('node:path');
 const storage = require('../storage');
 
 let mouseEventsIgnored = false;
-let targetOverlayWindow = null;
-let storedMcqAnswerText = 'No answer calculated yet. Take a screenshot (Ctrl+Enter) first.';
-
-function setStoredMcqAnswerText(text) {
-    if (text) {
-        storedMcqAnswerText = text;
-    }
-    try {
-        const overlayWin = getTargetOverlayWindow();
-        if (overlayWin && !overlayWin.isDestroyed()) {
-            overlayWin.webContents.send('store-mcq-answers', { text: storedMcqAnswerText });
-        }
-    } catch (e) {}
-}
 
 const DEFAULT_MAIN_WINDOW_SIZE = { width: 1100, height: 800 };
 const MIN_WINDOW_SIZE = { width: 700, height: 320 };
-
-function createTargetOverlayWindow() {
-    if (targetOverlayWindow && !targetOverlayWindow.isDestroyed()) {
-        return targetOverlayWindow;
-    }
-
-    try {
-        const primaryDisplay = screen.getPrimaryDisplay();
-        const { width, height } = primaryDisplay.bounds;
-
-        targetOverlayWindow = new BrowserWindow({
-            title: 'MCQ Target Overlay',
-            x: 0,
-            y: 0,
-            width: width,
-            height: height,
-            transparent: true,
-            frame: false,
-            resizable: false,
-            hasShadow: false,
-            alwaysOnTop: true,
-            skipTaskbar: true,
-            focusable: false,
-            webPreferences: {
-                nodeIntegration: true,
-                contextIsolation: false,
-                backgroundThrottling: false,
-            },
-            backgroundColor: '#00000000',
-        });
-
-        targetOverlayWindow.setContentProtection(true);
-        targetOverlayWindow.setIgnoreMouseEvents(true, { forward: true });
-
-        if (process.platform === 'win32') {
-            targetOverlayWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
-            targetOverlayWindow.setAlwaysOnTop(true, 'screen-saver', 2);
-        }
-
-        targetOverlayWindow.loadFile(path.join(__dirname, '../target-overlay.html'));
-
-        targetOverlayWindow.on('show', () => {
-            try { targetOverlayWindow.setContentProtection(true); } catch (e) {}
-        });
-
-        targetOverlayWindow.on('closed', () => {
-            targetOverlayWindow = null;
-        });
-
-        return targetOverlayWindow;
-    } catch (e) {
-        console.error('Error creating target overlay window:', e);
-        return null;
-    }
-}
-
-function getTargetOverlayWindow() {
-    return createTargetOverlayWindow();
-}
 
 function createWindow(sendToRenderer, geminiSessionRef) {
     let windowWidth = DEFAULT_MAIN_WINDOW_SIZE.width;
@@ -173,9 +100,6 @@ function createWindow(sendToRenderer, geminiSessionRef) {
         }, 150);
     });
 
-    // Pre-warm target overlay window
-    createTargetOverlayWindow();
-
     setupWindowIpcHandlers(mainWindow, sendToRenderer, geminiSessionRef);
 
     return mainWindow;
@@ -197,7 +121,6 @@ function getDefaultKeybinds() {
         scrollUp: isMac ? 'Cmd+Shift+Up' : 'Ctrl+Shift+Up',
         scrollDown: isMac ? 'Cmd+Shift+Down' : 'Ctrl+Shift+Down',
         emergencyErase: isMac ? 'Cmd+Shift+E' : 'Ctrl+Shift+E',
-        toggleMcqAnswers: isMac ? 'Cmd+4' : 'Ctrl+4',
     };
 }
 
@@ -398,27 +321,6 @@ function updateGlobalShortcuts(keybinds, mainWindow, sendToRenderer, geminiSessi
             console.error(`Failed to register emergencyErase (${keybinds.emergencyErase}):`, error);
         }
     }
-
-    // Register toggle MCQ answer overlay shortcut (Ctrl+4 / Cmd+4)
-    if (keybinds.toggleMcqAnswers) {
-        try {
-            globalShortcut.register(keybinds.toggleMcqAnswers, () => {
-                console.log('Toggle MCQ answers shortcut triggered (Ctrl+4)');
-                try {
-                    const overlayWin = getTargetOverlayWindow();
-                    if (overlayWin && !overlayWin.isDestroyed()) {
-                        overlayWin.showInactive();
-                        overlayWin.webContents.send('toggle-mcq-answers-overlay', { text: storedMcqAnswerText });
-                    }
-                } catch (err) {
-                    console.error('Error toggling MCQ answer overlay:', err);
-                }
-            });
-            console.log(`Registered toggleMcqAnswers: ${keybinds.toggleMcqAnswers}`);
-        } catch (error) {
-            console.error(`Failed to register toggleMcqAnswers (${keybinds.toggleMcqAnswers}):`, error);
-        }
-    }
 }
 
 function setupWindowIpcHandlers(mainWindow, sendToRenderer, geminiSessionRef) {
@@ -466,20 +368,11 @@ function setupWindowIpcHandlers(mainWindow, sendToRenderer, geminiSessionRef) {
             return { success: false, error: error.message };
         }
     });
-    ipcMain.on('show-target-overlay', () => {
-        const overlay = getTargetOverlayWindow();
-        if (overlay && !overlay.isDestroyed()) {
-            overlay.showInactive();
-        }
-    });
 }
 
 module.exports = {
     createWindow,
-    createTargetOverlayWindow,
-    getTargetOverlayWindow,
     getDefaultKeybinds,
     updateGlobalShortcuts,
     setupWindowIpcHandlers,
-    setStoredMcqAnswerText,
 };
