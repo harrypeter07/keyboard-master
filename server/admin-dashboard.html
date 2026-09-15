@@ -6,8 +6,28 @@
     <title>Keyboard Master Admin Console</title>
     <link rel="icon" type="image/png" href="/favicon.png">
     <link rel="apple-touch-icon" href="/logo.png">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script>
+        (function() {
+            try {
+                var token = localStorage.getItem('km_admin_token');
+                var params = new URLSearchParams(window.location.search);
+                if (token || params.get('token')) {
+                    document.documentElement.classList.add('has-admin-token');
+                }
+            } catch (e) {}
+        })();
+    </script>
     <style>
+        html.has-admin-token #authView {
+            display: none !important;
+        }
+        html.has-admin-token #dashView {
+            display: block !important;
+        }
+        html.has-admin-token #logoutBtn {
+            display: inline-flex !important;
+        }
+
         :root {
             --bg-dark: #0F172A;
             --bg: #FAF9F6;
@@ -1108,6 +1128,7 @@
                     if (data.user.role === 'admin') {
                         adminToken = data.token;
                         localStorage.setItem('km_admin_token', adminToken);
+                        document.documentElement.classList.add('has-admin-token');
                         showToast('Access Granted! Loading Console...', 'success');
                         await loadDashboard();
                     } else {
@@ -1136,6 +1157,7 @@
                 if (data.success && data.user.role === 'admin') {
                     adminToken = data.token;
                     localStorage.setItem('km_admin_token', adminToken);
+                    document.documentElement.classList.add('has-admin-token');
                     await loadDashboard();
                 } else if (data.success) {
                     showToast('Google auth success, but account lacks admin role.', 'error');
@@ -1174,6 +1196,7 @@
         window.addEventListener('load', initGoogleSSO);
 
         function logout() {
+            document.documentElement.classList.remove('has-admin-token');
             localStorage.removeItem('km_admin_token');
             location.reload();
         }
@@ -1188,6 +1211,7 @@
 
                 if (!data.success) {
                     showToast(data.error || 'Session expired. Please login.', 'error');
+                    document.documentElement.classList.remove('has-admin-token');
                     localStorage.removeItem('km_admin_token');
                     adminToken = '';
                     document.getElementById('authView').classList.remove('hidden');
@@ -1196,6 +1220,7 @@
                     return;
                 }
 
+                document.documentElement.classList.add('has-admin-token');
                 document.getElementById('authView').classList.add('hidden');
                 document.getElementById('dashView').classList.remove('hidden');
                 document.getElementById('logoutBtn').classList.remove('hidden');
